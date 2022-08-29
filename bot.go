@@ -672,15 +672,3 @@ func (bot *bot) cleanup() error {
 	}
 	return nil
 }
-
-var allMdV2 = []string{"_", "*", "[", "]", "(", ")", "~", "`", ">", "#", "+", "-", "=", "|", "{", "}", ".", "!"}
-var mdV2Repl = strings.NewReplacer(func() (out []string) {
-	for _, x := range allMdV2 {
-		out = append(out, x, "\\"+x)
-	}
-	return out
-}()...)
-
-func EscapeMarkdownV2(s string) string {
-	return mdV2Repl.Replace(s)
-}
