@@ -1,10 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"net/url"
 	"regexp"
 	"strings"
 
+	twitterscraper "github.com/JasonKhew96/twitter-scraper"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/pkg/errors"
 )
 
@@ -76,4 +79,47 @@ func parseTwitterUrl(rawText string) (*TwitterUrl, error) {
 	}
 
 	return nil, errors.New("url is not a twitter url")
+}
+
+func tweet2Caption(tweet *twitterscraper.Tweet) string {
+	caption := fmt.Sprintf("%s\n\n%s", EscapeMarkdownV2(strings.ReplaceAll(tweet.Text, "＃", "#")), EscapeMarkdownV2(tweet.PermanentURL))
+	for _, mention := range tweet.Mentions {
+		caption = strings.Replace(caption, "@"+EscapeMarkdownV2(mention), fmt.Sprintf(`[@%s](https://twitter\.com/%s)`, EscapeMarkdownV2(mention), EscapeMarkdownV2(mention)), 1)
+	}
+	for _, hashtag := range tweet.Hashtags {
+		caption = strings.Replace(caption, "\\#"+EscapeMarkdownV2(hashtag), fmt.Sprintf(`[\#%s](https://twitter\.com/hashtag/%s)`, EscapeMarkdownV2(hashtag), EscapeMarkdownV2(hashtag)), 1)
+	}
+	return caption
+}
+
+func tweet2InputMedia(tweet *twitterscraper.Tweet, caption string) []gotgbot.InputMedia {
+	inputMedia := []gotgbot.InputMedia{}
+	if len(tweet.Videos) > 0 {
+		for _, v := range tweet.Videos {
+			c := ""
+			if len(inputMedia) == 0 {
+				c = caption
+			}
+			inputMedia = append(inputMedia, gotgbot.InputMediaVideo{
+				Media:     v.URL,
+				Caption:   c,
+				ParseMode: "MarkdownV2",
+			})
+		}
+	} else {
+		for _, p := range tweet.Photos {
+			c := ""
+			if len(inputMedia) == 0 {
+				c = caption
+			}
+			urlSplit := strings.Split(p, ".")
+			newUrl := fmt.Sprintf("%s?format=%s&name=medium", p, urlSplit[len(urlSplit)-1])
+			inputMedia = append(inputMedia, gotgbot.InputMediaPhoto{
+				Media:     newUrl,
+				Caption:   c,
+				ParseMode: "MarkdownV2",
+			})
+		}
+	}
+	return inputMedia
 }

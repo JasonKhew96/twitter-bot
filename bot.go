@@ -180,42 +180,8 @@ func (bot *bot) handlePrivateMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 		_, err = ctx.EffectiveMessage.Reply(b, err.Error(), nil)
 		return err
 	}
-
-	caption := fmt.Sprintf("%s\n\n%s", EscapeMarkdownV2(strings.ReplaceAll(tweet.Text, "＃", "#")), EscapeMarkdownV2(tweet.PermanentURL))
-	for _, mention := range tweet.Mentions {
-		caption = strings.Replace(caption, "@"+EscapeMarkdownV2(mention), fmt.Sprintf(`[@%s](https://twitter\.com/%s)`, EscapeMarkdownV2(mention), EscapeMarkdownV2(mention)), 1)
-	}
-	for _, hashtag := range tweet.Hashtags {
-		caption = strings.Replace(caption, "\\#"+EscapeMarkdownV2(hashtag), fmt.Sprintf(`[\#%s](https://twitter\.com/hashtag/%s)`, EscapeMarkdownV2(hashtag), EscapeMarkdownV2(hashtag)), 1)
-	}
-	inputMedia := []gotgbot.InputMedia{}
-	if len(tweet.Videos) > 0 {
-		for _, v := range tweet.Videos {
-			c := ""
-			if len(inputMedia) == 0 {
-				c = caption
-			}
-			inputMedia = append(inputMedia, gotgbot.InputMediaVideo{
-				Media:     v.URL,
-				Caption:   c,
-				ParseMode: "MarkdownV2",
-			})
-		}
-	} else {
-		for _, p := range tweet.Photos {
-			c := ""
-			if len(inputMedia) == 0 {
-				c = caption
-			}
-			urlSplit := strings.Split(p, ".")
-			newUrl := fmt.Sprintf("%s?format=%s&name=medium", p, urlSplit[len(urlSplit)-1])
-			inputMedia = append(inputMedia, gotgbot.InputMediaPhoto{
-				Media:     newUrl,
-				Caption:   c,
-				ParseMode: "MarkdownV2",
-			})
-		}
-	}
+	caption := tweet2Caption(tweet)
+	inputMedia := tweet2InputMedia(tweet, caption)
 
 	if len(inputMedia) > 1 {
 		_, err = b.SendMediaGroup(ctx.EffectiveChat.Id, inputMedia, nil)
@@ -581,41 +547,8 @@ func (bot *bot) processRetweet(tweet *twitterscraper.Tweet) error {
 
 	log.Println(tweet.Likes, tweet.SensitiveContent, tweet.PermanentURL)
 
-	caption := fmt.Sprintf("%s\n\n%s", EscapeMarkdownV2(strings.ReplaceAll(tweet.Text, "＃", "#")), EscapeMarkdownV2(tweet.PermanentURL))
-	for _, mention := range tweet.Mentions {
-		caption = strings.Replace(caption, "@"+EscapeMarkdownV2(mention), fmt.Sprintf(`[@%s](https://twitter\.com/%s)`, EscapeMarkdownV2(mention), EscapeMarkdownV2(mention)), 1)
-	}
-	for _, hashtag := range tweet.Hashtags {
-		caption = strings.Replace(caption, "\\#"+EscapeMarkdownV2(hashtag), fmt.Sprintf(`[\#%s](https://twitter\.com/hashtag/%s)`, EscapeMarkdownV2(hashtag), EscapeMarkdownV2(hashtag)), 1)
-	}
-	inputMedia := []gotgbot.InputMedia{}
-	if len(tweet.Videos) > 0 {
-		for _, v := range tweet.Videos {
-			c := ""
-			if len(inputMedia) == 0 {
-				c = caption
-			}
-			inputMedia = append(inputMedia, gotgbot.InputMediaVideo{
-				Media:     v.URL,
-				Caption:   c,
-				ParseMode: "MarkdownV2",
-			})
-		}
-	} else {
-		for _, p := range tweet.Photos {
-			c := ""
-			if len(inputMedia) == 0 {
-				c = caption
-			}
-			urlSplit := strings.Split(p, ".")
-			newUrl := fmt.Sprintf("%s?format=%s&name=medium", p, urlSplit[len(urlSplit)-1])
-			inputMedia = append(inputMedia, gotgbot.InputMediaPhoto{
-				Media:     newUrl,
-				Caption:   c,
-				ParseMode: "MarkdownV2",
-			})
-		}
-	}
+	caption := tweet2Caption(tweet)
+	inputMedia := tweet2InputMedia(tweet, caption)
 
 	bot.jobs <- Job{
 		inputMedias: inputMedia,
@@ -650,41 +583,8 @@ func (bot *bot) processTweet(tweet *twitterscraper.Tweet) error {
 
 	log.Println(tweet.Likes, tweet.SensitiveContent, tweet.PermanentURL)
 
-	caption := fmt.Sprintf("%s\n\n%s", EscapeMarkdownV2(strings.ReplaceAll(tweet.Text, "＃", "#")), EscapeMarkdownV2(tweet.PermanentURL))
-	for _, mention := range tweet.Mentions {
-		caption = strings.Replace(caption, "@"+EscapeMarkdownV2(mention), fmt.Sprintf(`[@%s](https://twitter\.com/%s)`, EscapeMarkdownV2(mention), EscapeMarkdownV2(mention)), 1)
-	}
-	for _, hashtag := range tweet.Hashtags {
-		caption = strings.Replace(caption, "\\#"+EscapeMarkdownV2(hashtag), fmt.Sprintf(`[\#%s](https://twitter\.com/hashtag/%s)`, EscapeMarkdownV2(hashtag), EscapeMarkdownV2(hashtag)), 1)
-	}
-	inputMedia := []gotgbot.InputMedia{}
-	if len(tweet.Videos) > 0 {
-		for _, v := range tweet.Videos {
-			c := ""
-			if len(inputMedia) == 0 {
-				c = caption
-			}
-			inputMedia = append(inputMedia, gotgbot.InputMediaVideo{
-				Media:     v.URL,
-				Caption:   c,
-				ParseMode: "MarkdownV2",
-			})
-		}
-	} else {
-		for _, p := range tweet.Photos {
-			c := ""
-			if len(inputMedia) == 0 {
-				c = caption
-			}
-			urlSplit := strings.Split(p, ".")
-			newUrl := fmt.Sprintf("%s?format=%s&name=medium", p, urlSplit[len(urlSplit)-1])
-			inputMedia = append(inputMedia, gotgbot.InputMediaPhoto{
-				Media:     newUrl,
-				Caption:   c,
-				ParseMode: "MarkdownV2",
-			})
-		}
-	}
+	caption := tweet2Caption(tweet)
+	inputMedia := tweet2InputMedia(tweet, caption)
 
 	bot.jobs <- Job{
 		inputMedias: inputMedia,
