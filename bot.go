@@ -390,7 +390,7 @@ func isPopularTweet(t time.Time, likes int) bool {
 }
 
 func isRepost(tweet *twitterscraper.Tweet) bool {
-	forbiddenHashTags := []string{"フォロー", "フォロワー", "連休", "見た人", "自分が", "晒そう", "晒す", "贴る"}
+	forbiddenHashTags := []string{"フォロー", "フォロワー", "連休", "見た人", "自分が", "晒そう", "晒す", "貼る"}
 	// forbiddenRegexHashTags := []string{`\d{4}年自分が選ぶ今年[上下]半期の\d枚`, `今[年月]描いた絵を晒そう`, "^自分が"}
 	forbiddenTexts := []string{"再掲", "過去絵", "去年"}
 	forbiddenRegexTexts := []string{`(?i)\bwip\b`}
