@@ -16,6 +16,7 @@ import (
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers"
+	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers/filters/message"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 	"github.com/volatiletech/null/v8"
@@ -131,6 +132,7 @@ func (bot *bot) initBot() error {
 	}, bot.handleChatMessages))
 	dispatcher.AddHandler(handlers.NewCommand("follow", bot.commandFollow))
 	dispatcher.AddHandler(handlers.NewCommand("unfollow", bot.commandUnfollow))
+	dispatcher.AddHandler(handlers.NewMessage(message.Private, bot.handlePrivateMessages))
 
 	// Start receiving updates.
 	err := updater.StartPolling(bot.tg, &ext.PollingOpts{
@@ -160,6 +162,98 @@ func (bot *bot) worker() {
 		}
 		time.Sleep(5 * time.Second)
 	}
+}
+
+func (bot *bot) handlePrivateMessages(b *gotgbot.Bot, ctx *ext.Context) error {
+	if !(ctx.EffectiveMessage.Text != "" && len(ctx.EffectiveMessage.Entities) > 0 && ctx.EffectiveMessage.Entities[0].Type == "url") {
+		return nil
+	}
+	str := ctx.EffectiveMessage.Text
+	url, err := parseTwitterUrl(str)
+	if err != nil {
+		_, err = ctx.EffectiveMessage.Reply(b, err.Error(), nil)
+		return err
+	}
+	tweetID := url.TweetID
+	tweet, err := bot.twit.GetTweet(tweetID)
+	if err != nil {
+		_, err = ctx.EffectiveMessage.Reply(b, err.Error(), nil)
+		return err
+	}
+
+	caption := fmt.Sprintf("%s\n\n%s", EscapeMarkdownV2(strings.ReplaceAll(tweet.Text, "＃", "#")), EscapeMarkdownV2(tweet.PermanentURL))
+	for _, mention := range tweet.Mentions {
+		caption = strings.Replace(caption, "@"+EscapeMarkdownV2(mention), fmt.Sprintf(`[@%s](https://twitter\.com/%s)`, EscapeMarkdownV2(mention), EscapeMarkdownV2(mention)), 1)
+	}
+	for _, hashtag := range tweet.Hashtags {
+		caption = strings.Replace(caption, "\\#"+EscapeMarkdownV2(hashtag), fmt.Sprintf(`[\#%s](https://twitter\.com/hashtag/%s)`, EscapeMarkdownV2(hashtag), EscapeMarkdownV2(hashtag)), 1)
+	}
+	inputMedia := []gotgbot.InputMedia{}
+	if len(tweet.Videos) > 0 {
+		for _, v := range tweet.Videos {
+			c := ""
+			if len(inputMedia) == 0 {
+				c = caption
+			}
+			inputMedia = append(inputMedia, gotgbot.InputMediaVideo{
+				Media:     v.URL,
+				Caption:   c,
+				ParseMode: "MarkdownV2",
+			})
+		}
+	} else {
+		for _, p := range tweet.Photos {
+			c := ""
+			if len(inputMedia) == 0 {
+				c = caption
+			}
+			urlSplit := strings.Split(p, ".")
+			newUrl := fmt.Sprintf("%s?format=%s&name=medium", p, urlSplit[len(urlSplit)-1])
+			inputMedia = append(inputMedia, gotgbot.InputMediaPhoto{
+				Media:     newUrl,
+				Caption:   c,
+				ParseMode: "MarkdownV2",
+			})
+		}
+	}
+
+	if len(inputMedia) > 1 {
+		_, err = b.SendMediaGroup(ctx.EffectiveChat.Id, inputMedia, nil)
+	} else if len(inputMedia) == 1 {
+		if tweet.Videos != nil && len(tweet.Videos) > 0 {
+			_, err = b.SendVideo(ctx.EffectiveChat.Id, inputMedia[0].GetMedia(), &gotgbot.SendVideoOpts{
+				Caption:          caption,
+				ParseMode:        "MarkdownV2",
+				ReplyToMessageId: ctx.EffectiveMessage.MessageId,
+			})
+		} else {
+			_, err = b.SendPhoto(ctx.EffectiveChat.Id, inputMedia[0].GetMedia(), &gotgbot.SendPhotoOpts{
+				Caption:          caption,
+				ParseMode:        "MarkdownV2",
+				ReplyToMessageId: ctx.EffectiveMessage.MessageId,
+			})
+		}
+	} else {
+		_, err = b.SendMessage(ctx.EffectiveChat.Id, caption, &gotgbot.SendMessageOpts{
+			DisableWebPagePreview: true,
+			ParseMode:             "MarkdownV2",
+			ReplyToMessageId:      ctx.EffectiveMessage.MessageId,
+		})
+	}
+	if err != nil {
+		_, err = ctx.EffectiveMessage.Reply(b, err.Error(), nil)
+		return err
+	}
+
+	urlList := []string{}
+	urlList = append(urlList, tweet.Photos...)
+	for _, v := range tweet.Videos {
+		urlList = append(urlList, v.URL)
+	}
+	_, err = ctx.EffectiveMessage.Reply(b, strings.Join(urlList, "\n"), &gotgbot.SendMessageOpts{
+		DisableWebPagePreview: true,
+	})
+	return err
 }
 
 func (bot *bot) handleChatMessages(b *gotgbot.Bot, ctx *ext.Context) error {
