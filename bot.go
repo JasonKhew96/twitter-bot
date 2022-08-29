@@ -362,7 +362,7 @@ func isNotText(tweet *twitterscraper.Tweet) bool {
 }
 
 func isPopularRetweet(t time.Time, likes int) bool {
-	factor := 5120
+	factor := 2560
 
 	sinceHours := int(math.Floor(time.Since(t).Hours()))
 
@@ -376,7 +376,7 @@ func isPopularRetweet(t time.Time, likes int) bool {
 }
 
 func isPopularTweet(t time.Time, likes int) bool {
-	factor := 128
+	factor := 256
 
 	sinceHours := int(math.Floor(time.Since(t).Hours()))
 
