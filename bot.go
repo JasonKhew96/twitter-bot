@@ -156,7 +156,7 @@ func (bot *bot) worker() {
 	for job := range bot.jobs {
 		if msg, err := bot.tg.SendMediaGroup(bot.channelChatID, job.inputMedias, nil); err != nil {
 			log.Println(err)
-			bot.tg.SendMessage(bot.ownerID, err.Error(), nil)
+			bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("%+v\n\n%+v", err.Error(), job.inputMedias), nil)
 		} else if len(job.cache.photos) > 0 || len(job.cache.videos) > 0 {
 			bot.caches[msg[0].MessageId] = job.cache
 		}
@@ -186,7 +186,7 @@ func (bot *bot) handlePrivateMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 	if len(inputMedia) > 1 {
 		_, err = b.SendMediaGroup(ctx.EffectiveChat.Id, inputMedia, nil)
 	} else if len(inputMedia) == 1 {
-		if tweet.Videos != nil && len(tweet.Videos) > 0 {
+		if (tweet.Videos != nil && len(tweet.Videos) > 0) || (tweet.AnimatedGif != nil && len(tweet.AnimatedGif) > 0) {
 			_, err = b.SendVideo(ctx.EffectiveChat.Id, inputMedia[0].GetMedia(), &gotgbot.SendVideoOpts{
 				Caption:          caption,
 				ParseMode:        "MarkdownV2",
@@ -216,6 +216,10 @@ func (bot *bot) handlePrivateMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 	for _, v := range tweet.Videos {
 		urlList = append(urlList, v.URL)
 	}
+	for _, v := range tweet.AnimatedGif {
+		urlList = append(urlList, v.URL)
+	}
+
 	_, err = ctx.EffectiveMessage.Reply(b, strings.Join(urlList, "\n"), &gotgbot.SendMessageOpts{
 		DisableWebPagePreview: true,
 	})
@@ -382,14 +386,20 @@ func (bot *bot) insertTweet(tweet *twitterscraper.Tweet) error {
 	}
 
 	medias := ""
-	if len(tweet.Photos) > 0 {
-		medias = strings.Join(tweet.Photos, "|")
-	} else if len(tweet.Videos) > 0 {
+	if len(tweet.Videos) > 0 {
 		var videos []string
 		for _, v := range tweet.Videos {
 			videos = append(videos, v.URL)
 		}
 		medias = strings.Join(videos, "|")
+	} else if len(tweet.AnimatedGif) > 0 {
+		var videos []string
+		for _, v := range tweet.AnimatedGif {
+			videos = append(videos, v.URL)
+		}
+		medias = strings.Join(videos, "|")
+	} else if len(tweet.Photos) > 0 {
+		medias = strings.Join(tweet.Photos, "|")
 	}
 
 	t := models.Tweet{
@@ -409,6 +419,10 @@ func (bot *bot) insertTweet(tweet *twitterscraper.Tweet) error {
 	return t.Insert(context.Background(), bot.db, boil.Infer())
 }
 
+func isAnimatedGif(tweet *twitterscraper.Tweet) bool {
+	return len(tweet.AnimatedGif) > 0
+}
+
 func isVideos(tweet *twitterscraper.Tweet) bool {
 	return len(tweet.Videos) > 0
 }
@@ -418,7 +432,7 @@ func isPhotos(tweet *twitterscraper.Tweet) bool {
 }
 
 func isNotText(tweet *twitterscraper.Tweet) bool {
-	return (isVideos(tweet) || isPhotos(tweet))
+	return (isVideos(tweet) || isAnimatedGif(tweet) || isPhotos(tweet))
 }
 
 func isPopularRetweet(t time.Time, likes int) bool {
@@ -550,11 +564,18 @@ func (bot *bot) processRetweet(tweet *twitterscraper.Tweet) error {
 	caption := tweet2Caption(tweet)
 	inputMedia := tweet2InputMedia(tweet, caption)
 
+	var videos []twitterscraper.Video
+	if len(tweet.AnimatedGif) > 0 {
+		videos = append(videos, tweet.AnimatedGif...)
+	} else if len(tweet.Videos) > 0 {
+		videos = append(videos, tweet.Videos...)
+	}
+
 	bot.jobs <- Job{
 		inputMedias: inputMedia,
 		cache: &twiCache{
 			photos: tweet.Photos,
-			videos: tweet.Videos,
+			videos: videos,
 		},
 	}
 
@@ -586,11 +607,18 @@ func (bot *bot) processTweet(tweet *twitterscraper.Tweet) error {
 	caption := tweet2Caption(tweet)
 	inputMedia := tweet2InputMedia(tweet, caption)
 
+	var videos []twitterscraper.Video
+	if len(tweet.AnimatedGif) > 0 {
+		videos = append(videos, tweet.AnimatedGif...)
+	} else if len(tweet.Videos) > 0 {
+		videos = append(videos, tweet.Videos...)
+	}
+
 	bot.jobs <- Job{
 		inputMedias: inputMedia,
 		cache: &twiCache{
 			photos: tweet.Photos,
-			videos: tweet.Videos,
+			videos: videos,
 		},
 	}
 
