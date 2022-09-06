@@ -133,6 +133,9 @@ func (bot *bot) initBot() error {
 	dispatcher.AddHandler(handlers.NewCommand("follow", bot.commandFollow))
 	dispatcher.AddHandler(handlers.NewCommand("unfollow", bot.commandUnfollow))
 	dispatcher.AddHandler(handlers.NewMessage(message.Private, bot.handlePrivateMessages))
+	dispatcher.AddHandler(handlers.NewCallback(func(cq *gotgbot.CallbackQuery) bool {
+		return cq.From.Id == bot.ownerID
+	}, bot.handleCallbackData))
 
 	// Start receiving updates.
 	err := updater.StartPolling(bot.tg, &ext.PollingOpts{
@@ -162,6 +165,106 @@ func (bot *bot) worker() {
 		}
 		time.Sleep(5 * time.Second)
 	}
+}
+
+func (bot *bot) handleCallbackData(b *gotgbot.Bot, ctx *ext.Context) error {
+	if !strings.Contains(ctx.CallbackQuery.Data, "follow.") && !strings.Contains(ctx.CallbackQuery.Data, "unfollow.") {
+		_, err := ctx.CallbackQuery.Answer(b, &gotgbot.AnswerCallbackQueryOpts{
+			Text:      "Wrong data",
+			ShowAlert: true,
+			CacheTime: 60,
+		})
+		return err
+	}
+	username := strings.Split(ctx.CallbackQuery.Data, ".")[1]
+	switch {
+	case strings.HasPrefix(ctx.CallbackQuery.Data, "follow."):
+		profile, err := bot.twit.GetProfile(username)
+		if err != nil {
+			_, err := ctx.CallbackQuery.Answer(b, &gotgbot.AnswerCallbackQueryOpts{
+				Text:      fmt.Sprintf("Error GetProfile %s", err.Error()),
+				ShowAlert: true,
+				CacheTime: 60,
+			})
+			return err
+		}
+		uid, err := strconv.ParseInt(profile.UserID, 10, 64)
+		if err != nil {
+			_, err := ctx.CallbackQuery.Answer(b, &gotgbot.AnswerCallbackQueryOpts{
+				Text:      fmt.Sprintf("Error ParseInt %s", err.Error()),
+				ShowAlert: true,
+				CacheTime: 60,
+			})
+			return err
+		}
+		if _, err := models.Unfolloweds(models.UnfollowedWhere.UID.EQ(uid)).DeleteAll(context.Background(), bot.db); err != nil {
+			_, err := ctx.CallbackQuery.Answer(b, &gotgbot.AnswerCallbackQueryOpts{
+				Text:      fmt.Sprintf("Error DeleteAll %s", err.Error()),
+				ShowAlert: true,
+				CacheTime: 60,
+			})
+			return err
+		}
+		_, err = bot.twit.Follow(profile.Username)
+		if err != nil {
+			_, err := ctx.CallbackQuery.Answer(b, &gotgbot.AnswerCallbackQueryOpts{
+				Text:      fmt.Sprintf("Error Follow %s", err.Error()),
+				ShowAlert: true,
+				CacheTime: 60,
+			})
+			return err
+		}
+		_, err = ctx.CallbackQuery.Answer(b, &gotgbot.AnswerCallbackQueryOpts{
+			Text:      fmt.Sprintf("Followed https://twitter.com/%s", username),
+			ShowAlert: true,
+			CacheTime: 60,
+		})
+		return err
+	case strings.HasPrefix(ctx.CallbackQuery.Data, "unfollow."):
+		profile, err := bot.twit.GetProfile(username)
+		if err != nil {
+			_, err := ctx.CallbackQuery.Answer(b, &gotgbot.AnswerCallbackQueryOpts{
+				Text:      fmt.Sprintf("Error GetProfile %s", err.Error()),
+				ShowAlert: true,
+				CacheTime: 60,
+			})
+			return err
+		}
+		uid, err := strconv.ParseInt(profile.UserID, 10, 64)
+		if err != nil {
+			_, err := ctx.CallbackQuery.Answer(b, &gotgbot.AnswerCallbackQueryOpts{
+				Text:      fmt.Sprintf("Error ParseInt %s", err.Error()),
+				ShowAlert: true,
+				CacheTime: 60,
+			})
+			return err
+		}
+		t := models.Unfollowed{
+			UID: uid,
+		}
+		if err := t.Insert(context.Background(), bot.db, boil.Infer()); err != nil {
+			bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("Error Insert %s", err.Error()), nil)
+		}
+		_, err = bot.twit.Unfollow(profile.Username)
+		if err != nil {
+			_, err := ctx.CallbackQuery.Answer(b, &gotgbot.AnswerCallbackQueryOpts{
+				Text:      fmt.Sprintf("Error Unfollow %s", err.Error()),
+				ShowAlert: true,
+				CacheTime: 60,
+			})
+			return err
+		}
+
+		_, err = ctx.CallbackQuery.Answer(b, &gotgbot.AnswerCallbackQueryOpts{
+			Text:      fmt.Sprintf("Unfollowed https://twitter.com/%s", username),
+			ShowAlert: true,
+			CacheTime: 60,
+		})
+		return err
+	default:
+		break
+	}
+	return nil
 }
 
 func (bot *bot) handlePrivateMessages(b *gotgbot.Bot, ctx *ext.Context) error {
@@ -311,7 +414,22 @@ func (bot *bot) commandFollow(b *gotgbot.Bot, ctx *ext.Context) error {
 		return err
 	}
 
-	_, err = ctx.EffectiveMessage.Reply(b, fmt.Sprintf("Following... https://twitter.com/%s", twitterUrl.Username), nil)
+	_, err = ctx.EffectiveMessage.Reply(b, fmt.Sprintf("Following https://twitter.com/%s", twitterUrl.Username), &gotgbot.SendMessageOpts{
+		ReplyMarkup: gotgbot.InlineKeyboardMarkup{
+			InlineKeyboard: [][]gotgbot.InlineKeyboardButton{
+				{
+					{
+						Text:         "Follow",
+						CallbackData: "follow." + profile.Username,
+					},
+					{
+						Text:         "Unfollow",
+						CallbackData: "unfollow." + profile.Username,
+					},
+				},
+			},
+		},
+	})
 	return err
 }
 
@@ -366,7 +484,22 @@ func (bot *bot) commandUnfollow(b *gotgbot.Bot, ctx *ext.Context) error {
 		return err
 	}
 
-	_, err = ctx.EffectiveMessage.Reply(b, fmt.Sprintf("Unfollowed https://twitter.com/%s", twitterUrl.Username), nil)
+	_, err = ctx.EffectiveMessage.Reply(b, fmt.Sprintf("Unfollowed https://twitter.com/%s", twitterUrl.Username), &gotgbot.SendMessageOpts{
+		ReplyMarkup: gotgbot.InlineKeyboardMarkup{
+			InlineKeyboard: [][]gotgbot.InlineKeyboardButton{
+				{
+					{
+						Text:         "Follow",
+						CallbackData: "follow." + profile.Username,
+					},
+					{
+						Text:         "Unfollow",
+						CallbackData: "unfollow." + profile.Username,
+					},
+				},
+			},
+		},
+	})
 	return err
 }
 
@@ -543,7 +676,22 @@ func (bot *bot) processRetweet(tweet *twitterscraper.Tweet) error {
 	}
 	if !user.IsFollowing {
 		log.Println("Suggest", tweet.PermanentURL)
-		if _, err := bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("Followed https://twitter.com/%s", tweet.Username), nil); err != nil {
+		if _, err := bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("Followed https://twitter.com/%s", tweet.Username), &gotgbot.SendMessageOpts{
+			ReplyMarkup: gotgbot.InlineKeyboardMarkup{
+				InlineKeyboard: [][]gotgbot.InlineKeyboardButton{
+					{
+						{
+							Text:         "Follow",
+							CallbackData: "follow." + tweet.Username,
+						},
+						{
+							Text:         "Unfollow",
+							CallbackData: "unfollow." + tweet.Username,
+						},
+					},
+				},
+			},
+		}); err != nil {
 			log.Println(err)
 		}
 		if _, err := bot.twit.Follow(tweet.Username); err != nil {
@@ -629,7 +777,7 @@ func (bot *bot) newLoop() error {
 	for tweet := range bot.twit.GetHomeTimeline(context.Background(), 20*50) {
 		if tweet.Error != nil {
 			bot.errCount++
-			log.Println("GetHomeTimeline", tweet.Error)
+			log.Println("GetHomeTimeline", tweet.Error.Error())
 			bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("GetHomeTimeline %+v", tweet.Error), nil)
 			break
 		}
@@ -660,7 +808,7 @@ func (bot *bot) newLoop() error {
 	for tweet := range bot.twit.GetHomeLatestTimeline(context.Background(), 20*50) {
 		if tweet.Error != nil {
 			bot.errCount++
-			log.Println("GetHomeLatestTimeline", tweet.Error)
+			log.Println("GetHomeLatestTimeline", tweet.Error.Error())
 			bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("GetHomeLatestTimeline %+v", tweet.Error), nil)
 			break
 		}
