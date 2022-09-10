@@ -777,8 +777,8 @@ func (bot *bot) newLoop() error {
 	for tweet := range bot.twit.GetHomeTimeline(context.Background(), 20*50) {
 		if tweet.Error != nil {
 			bot.errCount++
-			log.Println("GetHomeTimeline", tweet.Error.Error())
-			bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("GetHomeTimeline %+v", tweet.Error), nil)
+			log.Println("GetHomeTimeline error")
+			bot.tg.SendMessage(bot.ownerID, "GetHomeTimeline error", nil)
 			break
 		}
 		bot.errCount = 0
@@ -787,16 +787,16 @@ func (bot *bot) newLoop() error {
 			err := bot.processRetweet(tweet.RetweetedStatus)
 			if err != nil {
 				bot.errCount++
-				log.Println("processRetweet", tweet.PermanentURL, err)
-				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processRetweet %s %+v", tweet.PermanentURL, err), nil)
+				log.Println("processRetweet error", tweet.PermanentURL)
+				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processRetweet error %s", tweet.PermanentURL), nil)
 				continue
 			}
 		} else if isNotText(&tweet.Tweet) {
 			err := bot.processTweet(&tweet.Tweet)
 			if err != nil {
 				bot.errCount++
-				log.Println("processTweet", tweet.PermanentURL, err)
-				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processTweet %s %+v", tweet.PermanentURL, err), nil)
+				log.Println("processTweet error", tweet.PermanentURL)
+				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processTweet error %s", tweet.PermanentURL), nil)
 				continue
 			}
 		}
@@ -808,8 +808,8 @@ func (bot *bot) newLoop() error {
 	for tweet := range bot.twit.GetHomeLatestTimeline(context.Background(), 20*50) {
 		if tweet.Error != nil {
 			bot.errCount++
-			log.Println("GetHomeLatestTimeline", tweet.Error.Error())
-			bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("GetHomeLatestTimeline %+v", tweet.Error), nil)
+			log.Println("GetHomeLatestTimeline error")
+			bot.tg.SendMessage(bot.ownerID, "GetHomeLatestTimeline error", nil)
 			break
 		}
 		bot.errCount = 0
@@ -818,16 +818,16 @@ func (bot *bot) newLoop() error {
 			err := bot.processRetweet(tweet.RetweetedStatus)
 			if err != nil {
 				bot.errCount++
-				log.Println("processRetweet", tweet.PermanentURL, err)
-				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processRetweet %s %+v", tweet.PermanentURL, err), nil)
+				log.Println("processRetweet error", tweet.PermanentURL)
+				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processRetweet error %s", tweet.PermanentURL), nil)
 				continue
 			}
 		} else if isNotText(&tweet.Tweet) {
 			err := bot.processTweet(&tweet.Tweet)
 			if err != nil {
 				bot.errCount++
-				log.Println("processTweet", tweet.PermanentURL, err)
-				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processTweet %s %+v", tweet.PermanentURL, err), nil)
+				log.Println("processTweet error", tweet.PermanentURL)
+				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processTweet error %s", tweet.PermanentURL), nil)
 				continue
 			}
 		}
