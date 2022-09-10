@@ -317,10 +317,10 @@ func (bot *bot) handlePrivateMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 	urlList := []string{}
 	urlList = append(urlList, tweet.Photos...)
 	for _, v := range tweet.Videos {
-		urlList = append(urlList, v.URL)
+		urlList = append(urlList, clearUrlQueries(v.URL))
 	}
 	for _, v := range tweet.AnimatedGif {
-		urlList = append(urlList, v.URL)
+		urlList = append(urlList, clearUrlQueries(v.URL))
 	}
 
 	_, err = ctx.EffectiveMessage.Reply(b, strings.Join(urlList, "\n"), &gotgbot.SendMessageOpts{
@@ -338,10 +338,9 @@ func (bot *bot) handleChatMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 		if len(c.photos) > 0 {
 			var inputMedia []gotgbot.InputMedia
 			for _, p := range c.photos {
-				urlSplit := strings.Split(p, ".")
-				newUrl := fmt.Sprintf("%s?format=%s&name=orig", p, urlSplit[len(urlSplit)-1])
+				newUrl := clearUrlQueries(p)
 				inputMedia = append(inputMedia, gotgbot.InputMediaDocument{
-					Caption: p,
+					Caption: newUrl,
 					Media:   newUrl,
 				})
 			}
@@ -350,10 +349,11 @@ func (bot *bot) handleChatMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 			}); err != nil {
 				return err
 			}
-		} else if len(c.videos) > 0 {
+		}
+		if len(c.videos) > 0 {
 			var captions string
 			for _, v := range c.videos {
-				captions += fmt.Sprintf("%s\n", v.URL)
+				captions += fmt.Sprintf("%s\n", clearUrlQueries(v.URL))
 			}
 			if _, err := b.SendMessage(ctx.Message.Chat.Id, captions, &gotgbot.SendMessageOpts{
 				DisableWebPagePreview: true,
@@ -522,13 +522,13 @@ func (bot *bot) insertTweet(tweet *twitterscraper.Tweet) error {
 	if len(tweet.Videos) > 0 {
 		var videos []string
 		for _, v := range tweet.Videos {
-			videos = append(videos, v.URL)
+			videos = append(videos, clearUrlQueries(v.URL))
 		}
 		medias = strings.Join(videos, "|")
 	} else if len(tweet.AnimatedGif) > 0 {
 		var videos []string
 		for _, v := range tweet.AnimatedGif {
-			videos = append(videos, v.URL)
+			videos = append(videos, clearUrlQueries(v.URL))
 		}
 		medias = strings.Join(videos, "|")
 	} else if len(tweet.Photos) > 0 {

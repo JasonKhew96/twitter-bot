@@ -112,8 +112,9 @@ func tweet2InputMedia(tweet *twitterscraper.Tweet, caption string) []gotgbot.Inp
 			if len(inputMedia) == 0 {
 				c = caption
 			}
+			newUrl := clearUrlQueries(v.URL)
 			inputMedia = append(inputMedia, gotgbot.InputMediaVideo{
-				Media:     v.URL,
+				Media:     newUrl,
 				Caption:   c,
 				ParseMode: "MarkdownV2",
 			})
@@ -124,8 +125,9 @@ func tweet2InputMedia(tweet *twitterscraper.Tweet, caption string) []gotgbot.Inp
 			if len(inputMedia) == 0 {
 				c = caption
 			}
+			newUrl := clearUrlQueries(v.URL)
 			inputMedia = append(inputMedia, gotgbot.InputMediaVideo{
-				Media:     v.URL,
+				Media:     newUrl,
 				Caption:   c,
 				ParseMode: "MarkdownV2",
 			})
@@ -136,8 +138,9 @@ func tweet2InputMedia(tweet *twitterscraper.Tweet, caption string) []gotgbot.Inp
 			if len(inputMedia) == 0 {
 				c = caption
 			}
-			urlSplit := strings.Split(p, ".")
-			newUrl := fmt.Sprintf("%s?format=%s&name=medium", p, urlSplit[len(urlSplit)-1])
+			newUrl := clearUrlQueries(p)
+			urlSplit := strings.Split(newUrl, ".")
+			newUrl = fmt.Sprintf("%s?format=%s&name=medium", p, urlSplit[len(urlSplit)-1])
 			inputMedia = append(inputMedia, gotgbot.InputMediaPhoto{
 				Media:     newUrl,
 				Caption:   c,
@@ -146,4 +149,13 @@ func tweet2InputMedia(tweet *twitterscraper.Tweet, caption string) []gotgbot.Inp
 		}
 	}
 	return inputMedia
+}
+
+func clearUrlQueries(link string) string {
+	newUrl := link
+	if tmp, err := url.Parse(newUrl); err == nil {
+		tmp.RawQuery = ""
+		newUrl = tmp.String()
+	}
+	return newUrl
 }
