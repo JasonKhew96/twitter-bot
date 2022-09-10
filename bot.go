@@ -277,6 +277,9 @@ func (bot *bot) handlePrivateMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 		_, err = ctx.EffectiveMessage.Reply(b, err.Error(), nil)
 		return err
 	}
+	if url.TweetID == "" {
+		return nil
+	}
 	tweetID := url.TweetID
 	tweet, err := bot.twit.GetTweet(tweetID)
 	if err != nil {
