@@ -633,7 +633,7 @@ func isRepost(tweet *twitterscraper.Tweet) bool {
 
 // guess
 func isIllustrator(text string) bool {
-	keyword := []string{"イラストレーター", "絵を描", "絵描", "pixiv", "skeb", "illustrator", "potofu"}
+	keyword := []string{"pixiv", "skeb", "potofu", "fantia"}
 	textLower := strings.ToLower(text)
 	for _, k := range keyword {
 		if strings.Contains(textLower, k) {
