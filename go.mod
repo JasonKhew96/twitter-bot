@@ -5,7 +5,7 @@ go 1.18
 
 require (
 	github.com/JasonKhew96/twitter-scraper v0.0.0-20220905081337-c265fee7cead
-	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.10
+	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.11
 	github.com/friendsofgo/errors v0.9.2
 	github.com/kat-co/vala v0.0.0-20170210184112-42e1d8b61f12
 	github.com/lib/pq v1.10.6
