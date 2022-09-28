@@ -139,9 +139,9 @@ func tweet2InputMedia(tweet *twitterscraper.Tweet, caption string) []gotgbot.Inp
 				c = caption
 			}
 			newUrl := clearUrlQueries(p)
-			urlSplit := strings.Split(newUrl, ".")
-			ext := urlSplit[len(urlSplit)-1]
-			newUrl = fmt.Sprintf("%s?format=%s&name=medium", strings.TrimSuffix(p, fmt.Sprintf(".%s", ext)), ext)
+			// urlSplit := strings.Split(newUrl, ".")
+			// ext := urlSplit[len(urlSplit)-1]
+			// newUrl = fmt.Sprintf("%s?format=%s&name=medium", strings.TrimSuffix(p, fmt.Sprintf(".%s", ext)), ext)
 			inputMedia = append(inputMedia, gotgbot.InputMediaPhoto{
 				Media:     newUrl,
 				Caption:   c,
