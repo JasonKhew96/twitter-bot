@@ -46,6 +46,9 @@ type bot struct {
 	channelChatID int64
 	groupChatID   int64
 	ownerID       int64
+
+	popularTweetFactor   int
+	popularRetweetFactor int
 }
 
 func New() (*bot, error) {
@@ -98,15 +101,17 @@ func New() (*bot, error) {
 	}
 
 	return &bot{
-		db:            db,
-		twit:          twit,
-		tg:            b,
-		caches:        make(map[int64]*twiCache),
-		jobs:          make(chan Job),
-		errCount:      0,
-		channelChatID: config.ChannelChatID,
-		groupChatID:   config.GroupChatID,
-		ownerID:       config.OwnerID,
+		db:                   db,
+		twit:                 twit,
+		tg:                   b,
+		caches:               make(map[int64]*twiCache),
+		jobs:                 make(chan Job),
+		errCount:             0,
+		channelChatID:        config.ChannelChatID,
+		groupChatID:          config.GroupChatID,
+		ownerID:              config.OwnerID,
+		popularTweetFactor:   config.PopularTweetFactor,
+		popularRetweetFactor: config.PopularRetweetFactor,
 	}, nil
 }
 
@@ -571,13 +576,11 @@ func isNotText(tweet *twitterscraper.Tweet) bool {
 	return (isVideos(tweet) || isAnimatedGif(tweet) || isPhotos(tweet))
 }
 
-func isPopularRetweet(t time.Time, likes int) bool {
-	factor := 2560
-
+func (bot *bot) isPopularRetweet(t time.Time, likes int) bool {
 	sinceHours := int(math.Floor(time.Since(t).Hours()))
 
 	for h := 1; h <= 24; h++ {
-		if sinceHours <= h && likes >= h*factor {
+		if sinceHours <= h && likes >= h*bot.popularRetweetFactor {
 			return true
 		}
 	}
@@ -585,13 +588,11 @@ func isPopularRetweet(t time.Time, likes int) bool {
 	return false
 }
 
-func isPopularTweet(t time.Time, likes int) bool {
-	factor := 256
-
+func (bot *bot) isPopularTweet(t time.Time, likes int) bool {
 	sinceHours := int(math.Floor(time.Since(t).Hours()))
 
 	for h := 1; h <= 24; h++ {
-		if sinceHours <= h && likes >= h*factor {
+		if sinceHours <= h && likes >= h*bot.popularTweetFactor {
 			return true
 		}
 	}
@@ -644,7 +645,7 @@ func isIllustrator(text string) bool {
 }
 
 func (bot *bot) processRetweet(tweet *twitterscraper.Tweet) error {
-	if !isPopularRetweet(tweet.TimeParsed, tweet.Likes) {
+	if !bot.isPopularRetweet(tweet.TimeParsed, tweet.Likes) {
 		return nil
 	}
 
@@ -734,7 +735,7 @@ func (bot *bot) processRetweet(tweet *twitterscraper.Tweet) error {
 }
 
 func (bot *bot) processTweet(tweet *twitterscraper.Tweet) error {
-	if !isPopularTweet(tweet.TimeParsed, tweet.Likes) {
+	if !bot.isPopularTweet(tweet.TimeParsed, tweet.Likes) {
 		return nil
 	}
 

@@ -8,13 +8,15 @@ import (
 )
 
 type Config struct {
-	DatabaseUrl      string
-	TwitterCookie    string
-	XCsrfToken       string
-	TelegramBotToken string
-	ChannelChatID    int64
-	GroupChatID      int64
-	OwnerID          int64
+	DatabaseUrl          string
+	TwitterCookie        string
+	XCsrfToken           string
+	TelegramBotToken     string
+	ChannelChatID        int64
+	GroupChatID          int64
+	OwnerID              int64
+	PopularTweetFactor   int
+	PopularRetweetFactor int
 }
 
 func loadConfig() (*Config, error) {
@@ -65,13 +67,33 @@ func loadConfig() (*Config, error) {
 		return nil, errors.Wrap(err, "OWNER_ID is not a number")
 	}
 
+	popularTweetFactorStr := os.Getenv("POPULAR_TWEET_FACTOR")
+	if popularTweetFactorStr == "" {
+		return nil, errors.New("POPULAR_TWEET_FACTOR is not set")
+	}
+	popularTweetFactor, err := strconv.Atoi(popularTweetFactorStr)
+	if popularTweetFactor == 0 || err != nil {
+		return nil, errors.Wrap(err, "POPULAR_TWEET_FACTOR is not a number")
+	}
+
+	popularRetweetFactorStr := os.Getenv("POPULAR_RETWEET_FACTOR")
+	if popularRetweetFactorStr == "" {
+		return nil, errors.New("POPULAR_RETWEET_FACTOR is not set")
+	}
+	popularRetweetFactor, err := strconv.Atoi(popularRetweetFactorStr)
+	if popularRetweetFactor == 0 || err != nil {
+		return nil, errors.Wrap(err, "POPULAR_RETWEET_FACTOR is not a number")
+	}
+
 	return &Config{
-		DatabaseUrl:      databaseUrl,
-		TwitterCookie:    twitterCookie,
-		XCsrfToken:       xcsrfToken,
-		TelegramBotToken: telegramBotToken,
-		ChannelChatID:    channelChatID,
-		GroupChatID:      groupChatID,
-		OwnerID:          ownerID,
+		DatabaseUrl:          databaseUrl,
+		TwitterCookie:        twitterCookie,
+		XCsrfToken:           xcsrfToken,
+		TelegramBotToken:     telegramBotToken,
+		ChannelChatID:        channelChatID,
+		GroupChatID:          groupChatID,
+		OwnerID:              ownerID,
+		PopularTweetFactor:   popularTweetFactor,
+		PopularRetweetFactor: popularRetweetFactor,
 	}, nil
 }
