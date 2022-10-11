@@ -1,10 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"log"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
+	"time"
 
 	twitterscraper "github.com/JasonKhew96/twitter-scraper"
 	"github.com/PaulSonOfLars/gotgbot/v2"
@@ -104,7 +108,7 @@ func tweet2Caption(tweet *twitterscraper.Tweet) string {
 	return caption
 }
 
-func tweet2InputMedia(tweet *twitterscraper.Tweet, caption string) []gotgbot.InputMedia {
+func tweet2InputMedias(tweet *twitterscraper.Tweet, caption string) []gotgbot.InputMedia {
 	inputMedia := []gotgbot.InputMedia{}
 	if len(tweet.Medias) > 0 {
 		for _, media := range tweet.Medias {
@@ -115,26 +119,34 @@ func tweet2InputMedia(tweet *twitterscraper.Tweet, caption string) []gotgbot.Inp
 			switch v := media.(type) {
 			case twitterscraper.MediaPhoto:
 				newUrl := clearUrlQueries(v.Url)
+				var media gotgbot.InputFile
+				buf, err := downloadToBuffer(newUrl)
+				if err != nil {
+					log.Println(err)
+					media = newUrl
+				} else {
+					media = buf
+				}
 				inputMedia = append(inputMedia, gotgbot.InputMediaPhoto{
-					Media:     newUrl,
+					Media:     media,
 					Caption:   c,
 					ParseMode: "MarkdownV2",
 				})
 			case twitterscraper.MediaVideo:
 				newUrl := clearUrlQueries(v.Url)
-				if v.IsAnimatedGif {
-					inputMedia = append(inputMedia, gotgbot.InputMediaAnimation{
-						Media:     newUrl,
-						Caption:   c,
-						ParseMode: "MarkdownV2",
-					})
+				var media gotgbot.InputFile
+				buf, err := downloadToBuffer(newUrl)
+				if err != nil {
+					log.Println(err)
+					media = newUrl
 				} else {
-					inputMedia = append(inputMedia, gotgbot.InputMediaVideo{
-						Media:     newUrl,
-						Caption:   c,
-						ParseMode: "MarkdownV2",
-					})
+					media = buf
 				}
+				inputMedia = append(inputMedia, gotgbot.InputMediaVideo{
+					Media:     media,
+					Caption:   c,
+					ParseMode: "MarkdownV2",
+				})
 			}
 		}
 	}
@@ -148,4 +160,21 @@ func clearUrlQueries(link string) string {
 		newUrl = tmp.String()
 	}
 	return newUrl
+}
+
+func downloadToBuffer(url string) (*bytes.Buffer, error) {
+	defaultClient := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+	resp, err := defaultClient.Get(url)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to download file")
+	}
+	defer resp.Body.Close()
+
+	buf := new(bytes.Buffer)
+	if _, err := buf.ReadFrom(resp.Body); err != nil {
+		return nil, errors.Wrap(err, "failed to read file")
+	}
+	return buf, nil
 }

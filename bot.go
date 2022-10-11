@@ -291,27 +291,20 @@ func (bot *bot) handlePrivateMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 		return err
 	}
 	caption := tweet2Caption(tweet)
-	inputMedia := tweet2InputMedia(tweet, caption)
+	inputMedias := tweet2InputMedias(tweet, caption)
 
-	if len(inputMedia) > 1 {
-		_, err = b.SendMediaGroup(ctx.EffectiveChat.Id, inputMedia, nil)
-	} else if len(inputMedia) == 1 {
-		switch inputMedia[0].(type) {
+	if len(inputMedias) > 1 {
+		_, err = b.SendMediaGroup(ctx.EffectiveChat.Id, inputMedias, nil)
+	} else if len(inputMedias) == 1 {
+		switch inputMedias[0].(type) {
 		case gotgbot.InputMediaPhoto:
-			_, err = b.SendPhoto(ctx.EffectiveChat.Id, inputMedia[0].GetMedia(), &gotgbot.SendPhotoOpts{
+			_, err = b.SendPhoto(ctx.EffectiveChat.Id, inputMedias[0].GetMedia(), &gotgbot.SendPhotoOpts{
 				Caption:          caption,
 				ParseMode:        "MarkdownV2",
 				ReplyToMessageId: ctx.EffectiveMessage.MessageId,
 			})
-		case gotgbot.InputMediaAnimation:
-			_, err = b.SendAnimation(ctx.EffectiveChat.Id, inputMedia[0].GetMedia(), &gotgbot.SendAnimationOpts{
-				Caption:          caption,
-				ParseMode:        "MarkdownV2",
-				ReplyToMessageId: ctx.EffectiveMessage.MessageId,
-			})
-
 		case gotgbot.InputMediaVideo:
-			_, err = b.SendVideo(ctx.EffectiveChat.Id, inputMedia[0].GetMedia(), &gotgbot.SendVideoOpts{
+			_, err = b.SendVideo(ctx.EffectiveChat.Id, inputMedias[0].GetMedia(), &gotgbot.SendVideoOpts{
 				Caption:          caption,
 				ParseMode:        "MarkdownV2",
 				ReplyToMessageId: ctx.EffectiveMessage.MessageId,
@@ -325,6 +318,7 @@ func (bot *bot) handlePrivateMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 		})
 	}
 	if err != nil {
+		log.Println(err)
 		_, err = ctx.EffectiveMessage.Reply(b, err.Error(), nil)
 		return err
 	}
@@ -359,12 +353,27 @@ func (bot *bot) handleChatMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 				switch v := media.(type) {
 				case twitterscraper.MediaPhoto:
 					newUrl = clearUrlQueries(v.Url)
+					splits := strings.Split(newUrl, ".")
+					ext := splits[len(splits)-1]
+					if ext == "jpg" || ext == "jpeg" || ext == "png" {
+						newUrl = strings.TrimRight(newUrl, "." + ext) + "?format=" + ext + "&name=orig"
+					}
 				case twitterscraper.MediaVideo:
 					newUrl = clearUrlQueries(v.Url)
 				}
+
+				var media gotgbot.InputFile
+				buf, err := downloadToBuffer(newUrl)
+				if err != nil {
+					log.Println(err)
+					media = newUrl
+				} else {
+					media = buf
+				}
+
 				inputMedia = append(inputMedia, gotgbot.InputMediaDocument{
 					Caption: newUrl,
-					Media:   newUrl,
+					Media:   media,
 				})
 			}
 			if _, err := b.SendMediaGroup(ctx.Message.Chat.Id, inputMedia, &gotgbot.SendMediaGroupOpts{
@@ -702,7 +711,7 @@ func (bot *bot) processRetweet(tweet *twitterscraper.Tweet) error {
 	log.Println(tweet.Likes, tweet.SensitiveContent, tweet.PermanentURL)
 
 	caption := tweet2Caption(tweet)
-	inputMedia := tweet2InputMedia(tweet, caption)
+	inputMedia := tweet2InputMedias(tweet, caption)
 
 	bot.jobs <- Job{
 		inputMedias: inputMedia,
@@ -737,7 +746,7 @@ func (bot *bot) processTweet(tweet *twitterscraper.Tweet) error {
 	log.Println(tweet.Likes, tweet.SensitiveContent, tweet.PermanentURL)
 
 	caption := tweet2Caption(tweet)
-	inputMedia := tweet2InputMedia(tweet, caption)
+	inputMedia := tweet2InputMedias(tweet, caption)
 
 	bot.jobs <- Job{
 		inputMedias: inputMedia,
