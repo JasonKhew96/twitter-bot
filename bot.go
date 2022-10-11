@@ -25,7 +25,8 @@ import (
 )
 
 type twiCache struct {
-	medias []twitterscraper.Media
+	tweetId string
+	medias  []twitterscraper.Media
 }
 
 type Job struct {
@@ -348,22 +349,27 @@ func (bot *bot) handleChatMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 		defer delete(bot.caches, ctx.Message.ForwardFromMessageId)
 		if len(c.medias) > 0 {
 			var inputMedia []gotgbot.InputMedia
-			for _, media := range c.medias {
+			for i, media := range c.medias {
 				var newUrl string
+				var fn string
 				switch v := media.(type) {
 				case twitterscraper.MediaPhoto:
 					newUrl = clearUrlQueries(v.Url)
 					splits := strings.Split(newUrl, ".")
 					ext := splits[len(splits)-1]
+					fn = fmt.Sprintf("%s_%02d.%s", c.tweetId, i+1, ext)
 					if ext == "jpg" || ext == "jpeg" || ext == "png" {
-						newUrl = strings.TrimRight(newUrl, "." + ext) + "?format=" + ext + "&name=orig"
+						newUrl = strings.TrimRight(newUrl, "."+ext) + "?format=" + ext + "&name=orig"
 					}
 				case twitterscraper.MediaVideo:
 					newUrl = clearUrlQueries(v.Url)
+					splits := strings.Split(newUrl, ".")
+					ext := splits[len(splits)-1]
+					fn = fmt.Sprintf("%s_%02d.%s", c.tweetId, i+1, ext)
 				}
 
 				var media gotgbot.InputFile
-				buf, err := downloadToBuffer(newUrl)
+				buf, err := downloadToBuffer(newUrl, fn)
 				if err != nil {
 					log.Println(err)
 					media = newUrl
@@ -716,7 +722,8 @@ func (bot *bot) processRetweet(tweet *twitterscraper.Tweet) error {
 	bot.jobs <- Job{
 		inputMedias: inputMedia,
 		cache: &twiCache{
-			medias: tweet.Medias,
+			tweetId: tweet.ID,
+			medias:  tweet.Medias,
 		},
 	}
 
@@ -751,7 +758,8 @@ func (bot *bot) processTweet(tweet *twitterscraper.Tweet) error {
 	bot.jobs <- Job{
 		inputMedias: inputMedia,
 		cache: &twiCache{
-			medias: tweet.Medias,
+			tweetId: tweet.ID,
+			medias:  tweet.Medias,
 		},
 	}
 

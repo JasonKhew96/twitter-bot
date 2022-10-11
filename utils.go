@@ -120,7 +120,7 @@ func tweet2InputMedias(tweet *twitterscraper.Tweet, caption string) []gotgbot.In
 			case twitterscraper.MediaPhoto:
 				newUrl := clearUrlQueries(v.Url)
 				var media gotgbot.InputFile
-				buf, err := downloadToBuffer(newUrl)
+				buf, err := downloadToBuffer(newUrl, "")
 				if err != nil {
 					log.Println(err)
 					media = newUrl
@@ -135,7 +135,7 @@ func tweet2InputMedias(tweet *twitterscraper.Tweet, caption string) []gotgbot.In
 			case twitterscraper.MediaVideo:
 				newUrl := clearUrlQueries(v.Url)
 				var media gotgbot.InputFile
-				buf, err := downloadToBuffer(newUrl)
+				buf, err := downloadToBuffer(newUrl, "")
 				if err != nil {
 					log.Println(err)
 					media = newUrl
@@ -162,7 +162,7 @@ func clearUrlQueries(link string) string {
 	return newUrl
 }
 
-func downloadToBuffer(url string) (*bytes.Buffer, error) {
+func downloadToBuffer(url, fn string) (*gotgbot.NamedFile, error) {
 	defaultClient := &http.Client{
 		Timeout: 10 * time.Second,
 	}
@@ -176,5 +176,9 @@ func downloadToBuffer(url string) (*bytes.Buffer, error) {
 	if _, err := buf.ReadFrom(resp.Body); err != nil {
 		return nil, errors.Wrap(err, "failed to read file")
 	}
-	return buf, nil
+
+	return &gotgbot.NamedFile{
+		File:     buf,
+		FileName: fn,
+	}, nil
 }
