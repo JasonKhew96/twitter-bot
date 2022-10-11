@@ -106,47 +106,36 @@ func tweet2Caption(tweet *twitterscraper.Tweet) string {
 
 func tweet2InputMedia(tweet *twitterscraper.Tweet, caption string) []gotgbot.InputMedia {
 	inputMedia := []gotgbot.InputMedia{}
-	if len(tweet.Videos) > 0 {
-		for _, v := range tweet.Videos {
+	if len(tweet.Medias) > 0 {
+		for _, media := range tweet.Medias {
 			c := ""
 			if len(inputMedia) == 0 {
 				c = caption
 			}
-			newUrl := clearUrlQueries(v.URL)
-			inputMedia = append(inputMedia, gotgbot.InputMediaVideo{
-				Media:     newUrl,
-				Caption:   c,
-				ParseMode: "MarkdownV2",
-			})
-		}
-	} else if len(tweet.AnimatedGif) > 0 {
-		for _, v := range tweet.AnimatedGif {
-			c := ""
-			if len(inputMedia) == 0 {
-				c = caption
+			switch v := media.(type) {
+			case twitterscraper.MediaPhoto:
+				newUrl := clearUrlQueries(v.Url)
+				inputMedia = append(inputMedia, gotgbot.InputMediaPhoto{
+					Media:     newUrl,
+					Caption:   c,
+					ParseMode: "MarkdownV2",
+				})
+			case twitterscraper.MediaVideo:
+				newUrl := clearUrlQueries(v.Url)
+				if v.IsAnimatedGif {
+					inputMedia = append(inputMedia, gotgbot.InputMediaAnimation{
+						Media:     newUrl,
+						Caption:   c,
+						ParseMode: "MarkdownV2",
+					})
+				} else {
+					inputMedia = append(inputMedia, gotgbot.InputMediaVideo{
+						Media:     newUrl,
+						Caption:   c,
+						ParseMode: "MarkdownV2",
+					})
+				}
 			}
-			newUrl := clearUrlQueries(v.URL)
-			inputMedia = append(inputMedia, gotgbot.InputMediaVideo{
-				Media:     newUrl,
-				Caption:   c,
-				ParseMode: "MarkdownV2",
-			})
-		}
-	} else {
-		for _, p := range tweet.Photos {
-			c := ""
-			if len(inputMedia) == 0 {
-				c = caption
-			}
-			newUrl := clearUrlQueries(p)
-			// urlSplit := strings.Split(newUrl, ".")
-			// ext := urlSplit[len(urlSplit)-1]
-			// newUrl = fmt.Sprintf("%s?format=%s&name=medium", strings.TrimSuffix(p, fmt.Sprintf(".%s", ext)), ext)
-			inputMedia = append(inputMedia, gotgbot.InputMediaPhoto{
-				Media:     newUrl,
-				Caption:   c,
-				ParseMode: "MarkdownV2",
-			})
 		}
 	}
 	return inputMedia
