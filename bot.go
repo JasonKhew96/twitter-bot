@@ -168,7 +168,7 @@ func (bot *bot) worker() {
 		} else if len(job.cache.medias) > 0 {
 			bot.caches[msg[0].MessageId] = job.cache
 		}
-		time.Sleep(5 * time.Second)
+		time.Sleep(10 * time.Second)
 	}
 }
 
