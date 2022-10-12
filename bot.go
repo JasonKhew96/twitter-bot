@@ -777,7 +777,15 @@ func (bot *bot) newLoop() error {
 		}
 		bot.errCount = 0
 
-		if tweet.IsRetweet && tweet.RetweetedStatus.UserID != tweet.UserID && (isMedia(tweet.RetweetedStatus)) {
+		if !isMedia(&tweet.Tweet) {
+			continue
+		}
+
+		if tweet.IsRetweet && tweet.RetweetedStatus.UserID == tweet.UserID {
+			continue
+		}
+
+		if tweet.IsRetweet {
 			err := bot.processRetweet(tweet.RetweetedStatus)
 			if err != nil {
 				bot.errCount++
@@ -786,7 +794,7 @@ func (bot *bot) newLoop() error {
 				time.Sleep(time.Minute)
 				continue
 			}
-		} else if isMedia(&tweet.Tweet) {
+		} else {
 			err := bot.processTweet(&tweet.Tweet)
 			if err != nil {
 				bot.errCount++
@@ -811,7 +819,15 @@ func (bot *bot) newLoop() error {
 		}
 		bot.errCount = 0
 
-		if tweet.IsRetweet && tweet.RetweetedStatus.UserID != tweet.UserID && (isMedia(tweet.RetweetedStatus)) {
+		if !isMedia(&tweet.Tweet) {
+			continue
+		}
+
+		if tweet.IsRetweet && tweet.RetweetedStatus.UserID == tweet.UserID {
+			continue
+		}
+
+		if tweet.IsRetweet {
 			err := bot.processRetweet(tweet.RetweetedStatus)
 			if err != nil {
 				bot.errCount++
@@ -820,7 +836,7 @@ func (bot *bot) newLoop() error {
 				time.Sleep(time.Minute)
 				continue
 			}
-		} else if isMedia(&tweet.Tweet) {
+		} else {
 			err := bot.processTweet(&tweet.Tweet)
 			if err != nil {
 				bot.errCount++
