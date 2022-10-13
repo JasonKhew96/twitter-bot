@@ -714,7 +714,7 @@ func (bot *bot) processRetweet(tweet *twitterscraper.Tweet) error {
 		return nil
 	}
 
-	log.Println(tweet.Likes, tweet.SensitiveContent, tweet.PermanentURL)
+	log.Println("retweet", tweet.Likes, tweet.SensitiveContent, tweet.PermanentURL)
 
 	caption := tweet2Caption(tweet)
 	inputMedia := tweet2InputMedias(tweet, caption)
@@ -750,7 +750,7 @@ func (bot *bot) processTweet(tweet *twitterscraper.Tweet) error {
 		return nil
 	}
 
-	log.Println(tweet.Likes, tweet.SensitiveContent, tweet.PermanentURL)
+	log.Println("tweet", tweet.Likes, tweet.SensitiveContent, tweet.PermanentURL)
 
 	caption := tweet2Caption(tweet)
 	inputMedia := tweet2InputMedias(tweet, caption)
