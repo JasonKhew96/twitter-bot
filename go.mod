@@ -4,7 +4,7 @@ module twitter-bot
 go 1.18
 
 require (
-	github.com/JasonKhew96/twitter-scraper v0.0.0-20221014072244-d96fe6da6dd6
+	github.com/JasonKhew96/twitter-scraper v0.0.0-20221014102457-c6e50eb719e8
 	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.11
 	github.com/friendsofgo/errors v0.9.2
 	github.com/kat-co/vala v0.0.0-20170210184112-42e1d8b61f12
@@ -38,7 +38,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
 	github.com/volatiletech/inflect v0.0.1 // indirect
-	golang.org/x/net v0.0.0-20221012135044-0b7e1fb9d458 // indirect
+	golang.org/x/net v0.0.0-20221014081412-f15817d10f9b // indirect
 	golang.org/x/sys v0.0.0-20220825204002-c680a09ffe64 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
