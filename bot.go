@@ -785,7 +785,7 @@ func (bot *bot) newLoop() error {
 			continue
 		}
 
-		if tweet.IsRetweet {
+		if tweet.IsRetweet || tweet.IsRecommended {
 			err := bot.processRetweet(tweet.RetweetedStatus)
 			if err != nil {
 				bot.errCount++
@@ -827,7 +827,7 @@ func (bot *bot) newLoop() error {
 			continue
 		}
 
-		if tweet.IsRetweet {
+		if tweet.IsRetweet || tweet.IsRecommended {
 			err := bot.processRetweet(tweet.RetweetedStatus)
 			if err != nil {
 				bot.errCount++
