@@ -172,6 +172,10 @@ func downloadToBuffer(url, fn string) (*gotgbot.NamedFile, error) {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New("failed to download file")
+	}
+
 	buf := new(bytes.Buffer)
 	if _, err := buf.ReadFrom(resp.Body); err != nil {
 		return nil, errors.Wrap(err, "failed to read file")
