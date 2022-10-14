@@ -785,12 +785,21 @@ func (bot *bot) newLoop() error {
 			continue
 		}
 
-		if tweet.IsRetweet || tweet.IsRecommended {
+		if tweet.IsRetweet {
 			err := bot.processRetweet(tweet.RetweetedStatus)
 			if err != nil {
 				bot.errCount++
 				log.Println("processRetweet error", tweet.PermanentURL)
 				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processRetweet error %s", tweet.PermanentURL), nil)
+				time.Sleep(time.Minute)
+				continue
+			}
+		} else if tweet.IsRecommended {
+			err := bot.processRetweet(&tweet.Tweet)
+			if err != nil {
+				bot.errCount++
+				log.Println("processRetweet recommended error", tweet.PermanentURL)
+				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processRetweet recommended error %s", tweet.PermanentURL), nil)
 				time.Sleep(time.Minute)
 				continue
 			}
@@ -827,12 +836,21 @@ func (bot *bot) newLoop() error {
 			continue
 		}
 
-		if tweet.IsRetweet || tweet.IsRecommended {
+		if tweet.IsRetweet {
 			err := bot.processRetweet(tweet.RetweetedStatus)
 			if err != nil {
 				bot.errCount++
 				log.Println("processRetweet error", tweet.PermanentURL)
 				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processRetweet error %s", tweet.PermanentURL), nil)
+				time.Sleep(time.Minute)
+				continue
+			}
+		} else if tweet.IsRecommended {
+			err := bot.processRetweet(&tweet.Tweet)
+			if err != nil {
+				bot.errCount++
+				log.Println("processRetweet recommended error", tweet.PermanentURL)
+				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processRetweet recommended error %s", tweet.PermanentURL), nil)
 				time.Sleep(time.Minute)
 				continue
 			}
