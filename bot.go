@@ -359,7 +359,7 @@ func (bot *bot) handleChatMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 					ext := splits[len(splits)-1]
 					fn = fmt.Sprintf("%s_%02d.%s", c.tweetId, i+1, ext)
 					if ext == "jpg" || ext == "jpeg" || ext == "png" {
-						newUrl = strings.TrimRight(newUrl, "."+ext) + "?format=" + ext + "&name=orig"
+						newUrl = strings.TrimSuffix(newUrl, "."+ext) + "?format=" + ext + "&name=orig"
 					}
 				case twitterscraper.MediaVideo:
 					newUrl = clearUrlQueries(v.Url)
