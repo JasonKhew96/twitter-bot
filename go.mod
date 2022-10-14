@@ -4,7 +4,7 @@ module twitter-bot
 go 1.18
 
 require (
-	github.com/JasonKhew96/twitter-scraper v0.0.0-20221011071226-6d84a7251e62
+	github.com/JasonKhew96/twitter-scraper v0.0.0-20221014072244-d96fe6da6dd6
 	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.11
 	github.com/friendsofgo/errors v0.9.2
 	github.com/kat-co/vala v0.0.0-20170210184112-42e1d8b61f12
