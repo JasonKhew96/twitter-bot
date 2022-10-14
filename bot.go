@@ -386,7 +386,7 @@ func (bot *bot) handleChatMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 				ReplyToMessageId: ctx.Message.MessageId,
 			}); err != nil {
 				log.Println(err)
-				_, err = bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("%+v\n\n%+v", err.Error(), inputMedia), nil)
+				_, err = bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("%+v\n\n%+v\n\n%s", err.Error(), inputMedia, ctx.Message.Entities[len(ctx.Message.Entities)-1].Url), nil)
 				return err
 			}
 		}
