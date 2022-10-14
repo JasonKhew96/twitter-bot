@@ -385,6 +385,8 @@ func (bot *bot) handleChatMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 			if _, err := b.SendMediaGroup(ctx.Message.Chat.Id, inputMedia, &gotgbot.SendMediaGroupOpts{
 				ReplyToMessageId: ctx.Message.MessageId,
 			}); err != nil {
+				log.Println(err)
+				_, err = bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("%+v\n\n%+v", err.Error(), inputMedia), nil)
 				return err
 			}
 		}
