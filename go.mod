@@ -1,6 +1,5 @@
 module twitter-bot
 
-// +heroku goVersion go1.18.3
 go 1.18
 
 require (
