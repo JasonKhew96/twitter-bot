@@ -111,6 +111,18 @@ func tweet2Caption(tweet *twitterscraper.Tweet) string {
 func tweet2InputMedias(tweet *twitterscraper.Tweet, caption string) []gotgbot.InputMedia {
 	inputMedia := []gotgbot.InputMedia{}
 	if len(tweet.Medias) > 0 {
+		for index, media := range tweet.Medias {
+			switch v := media.(type) {
+			case twitterscraper.MediaPhoto:
+				if v.Alt != "" {
+					caption += fmt.Sprintf("\n\n\\[%d\\] %s", index+1, EscapeMarkdownV2(v.Alt))
+				}
+			case twitterscraper.MediaVideo:
+				if v.Alt != "" {
+					caption += fmt.Sprintf("\n\n\\[%d\\] %s", index+1, EscapeMarkdownV2(v.Alt))
+				}
+			}
+		}
 		for _, media := range tweet.Medias {
 			c := ""
 			if len(inputMedia) == 0 {
@@ -118,9 +130,6 @@ func tweet2InputMedias(tweet *twitterscraper.Tweet, caption string) []gotgbot.In
 			}
 			switch v := media.(type) {
 			case twitterscraper.MediaPhoto:
-				if v.Alt != "" {
-					c += fmt.Sprintf("\n\n%s", EscapeMarkdownV2(v.Alt))
-				}
 				newUrl := clearUrlQueries(v.Url)
 				var media gotgbot.InputFile
 				buf, err := downloadToBuffer(newUrl, "")
@@ -136,9 +145,6 @@ func tweet2InputMedias(tweet *twitterscraper.Tweet, caption string) []gotgbot.In
 					ParseMode: "MarkdownV2",
 				})
 			case twitterscraper.MediaVideo:
-				if v.Alt != "" {
-					c += fmt.Sprintf("\n\n%s", EscapeMarkdownV2(v.Alt))
-				}
 				newUrl := clearUrlQueries(v.Url)
 				var media gotgbot.InputFile
 				buf, err := downloadToBuffer(newUrl, "")
