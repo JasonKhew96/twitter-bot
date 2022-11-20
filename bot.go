@@ -606,8 +606,28 @@ func (bot *bot) isPopularTweet(t time.Time, likes int) bool {
 }
 
 func isRepost(tweet *twitterscraper.Tweet) bool {
-	forbiddenHashTags := []string{"フォロー", "フォロワー", "連休", "見た人", "自分が", "晒そう", "晒す", "貼る"}
-	forbiddenRegexHashTags := []string{`^いい\W+の日$`, `を(見|み)せてください$`, `^自分の好きな`}
+	forbiddenHashTags := []string{
+		"フォロー",
+		"フォロワー",
+		"連休",
+		"見た人",
+		"自分が",
+		"晒そう",
+		"晒す",
+		"貼る",
+	}
+	forbiddenRegexHashTags := []string{
+		`^いい\W+の日$`,
+		`を(見|み)せてください$`,
+		`見てみましょう$`,
+		`^自分の好きな`,
+		`(?i)^aiart(work|community)?$`,
+		`(?i)^midjourney$`,
+		`(?i)^(stable|waifu)diffusion(art)?$`,
+		`(?i)^dreambooth$`,
+		`(?i)^novelai$`,
+		`(?i)^AIイラスト$`,
+	}
 	forbiddenTexts := []string{"再掲", "過去絵", "去年"}
 	forbiddenRegexTexts := []string{`(?i)\bwip\b`}
 
