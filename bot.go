@@ -897,7 +897,7 @@ func (bot *bot) newLoop() error {
 }
 
 func (bot *bot) cleanup() error {
-	count, err := models.Tweets(models.TweetWhere.CreatedAt.LT(time.Now().Add(-30*24*time.Hour))).DeleteAll(context.Background(), bot.db)
+	count, err := models.Tweets(models.TweetWhere.CreatedAt.LT(time.Now().Add(-90*24*time.Hour))).DeleteAll(context.Background(), bot.db)
 	if err != nil {
 		return err
 	}
