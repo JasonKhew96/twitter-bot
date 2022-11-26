@@ -273,6 +273,9 @@ func (bot *bot) handleCallbackData(b *gotgbot.Bot, ctx *ext.Context) error {
 }
 
 func (bot *bot) handlePrivateMessages(b *gotgbot.Bot, ctx *ext.Context) error {
+	if ctx.EffectiveUser.Id != bot.ownerID {
+		return nil
+	}
 	if !(ctx.EffectiveMessage.Text != "" && len(ctx.EffectiveMessage.Entities) > 0 && ctx.EffectiveMessage.Entities[0].Type == "url") {
 		return nil
 	}
