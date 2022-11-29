@@ -170,19 +170,19 @@ func (bot *bot) worker() {
 			var msg *gotgbot.Message
 			switch job.inputMedias[0].(type) {
 			case gotgbot.InputMediaPhoto:
-				caption := job.inputMedias[0].(*gotgbot.InputMediaPhoto).Caption
+				caption := job.inputMedias[0].(gotgbot.InputMediaPhoto).Caption
 				msg, err = bot.tg.SendPhoto(bot.channelChatID, job.inputMedias[0].GetMedia(), &gotgbot.SendPhotoOpts{
 					Caption:   caption,
 					ParseMode: "MarkdownV2",
 				})
 			case gotgbot.InputMediaVideo:
-				caption := job.inputMedias[0].(*gotgbot.InputMediaVideo).Caption
+				caption := job.inputMedias[0].(gotgbot.InputMediaVideo).Caption
 				msg, err = bot.tg.SendVideo(bot.channelChatID, job.inputMedias[0].GetMedia(), &gotgbot.SendVideoOpts{
 					Caption:   caption,
 					ParseMode: "MarkdownV2",
 				})
 			case gotgbot.InputMediaAnimation:
-				caption := job.inputMedias[0].(*gotgbot.InputMediaAnimation).Caption
+				caption := job.inputMedias[0].(gotgbot.InputMediaAnimation).Caption
 				msg, err = bot.tg.SendAnimation(bot.channelChatID, job.inputMedias[0].GetMedia(), &gotgbot.SendAnimationOpts{
 					Caption:   caption,
 					ParseMode: "MarkdownV2",
