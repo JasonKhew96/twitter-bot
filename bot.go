@@ -162,11 +162,39 @@ func (bot *bot) initBot() error {
 
 func (bot *bot) worker() {
 	for job := range bot.jobs {
-		if msg, err := bot.tg.SendMediaGroup(bot.channelChatID, job.inputMedias, nil); err != nil {
+		var msgs []gotgbot.Message
+		var err error
+		if len(job.inputMedias) > 1 {
+			msgs, err = bot.tg.SendMediaGroup(bot.channelChatID, job.inputMedias, nil)
+		} else {
+			var msg *gotgbot.Message
+			switch job.inputMedias[0].(type) {
+			case gotgbot.InputMediaPhoto:
+				caption := job.inputMedias[0].(*gotgbot.InputMediaPhoto).Caption
+				msg, err = bot.tg.SendPhoto(bot.channelChatID, job.inputMedias[0].GetMedia(), &gotgbot.SendPhotoOpts{
+					Caption:   caption,
+					ParseMode: "MarkdownV2",
+				})
+			case gotgbot.InputMediaVideo:
+				caption := job.inputMedias[0].(*gotgbot.InputMediaVideo).Caption
+				msg, err = bot.tg.SendVideo(bot.channelChatID, job.inputMedias[0].GetMedia(), &gotgbot.SendVideoOpts{
+					Caption:   caption,
+					ParseMode: "MarkdownV2",
+				})
+			case gotgbot.InputMediaAnimation:
+				caption := job.inputMedias[0].(*gotgbot.InputMediaAnimation).Caption
+				msg, err = bot.tg.SendAnimation(bot.channelChatID, job.inputMedias[0].GetMedia(), &gotgbot.SendAnimationOpts{
+					Caption:   caption,
+					ParseMode: "MarkdownV2",
+				})
+			}
+			msgs = append(msgs, *msg)
+		}
+		if err != nil {
 			log.Println(err)
 			bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("%+v\n\n%+v", err.Error(), job.inputMedias), nil)
 		} else if len(job.cache.medias) > 0 {
-			bot.caches[msg[0].MessageId] = job.cache
+			bot.caches[msgs[0].MessageId] = job.cache
 		}
 		time.Sleep(10 * time.Second)
 	}
@@ -309,6 +337,12 @@ func (bot *bot) handlePrivateMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 			})
 		case gotgbot.InputMediaVideo:
 			_, err = b.SendVideo(ctx.EffectiveChat.Id, inputMedias[0].GetMedia(), &gotgbot.SendVideoOpts{
+				Caption:          caption,
+				ParseMode:        "MarkdownV2",
+				ReplyToMessageId: ctx.EffectiveMessage.MessageId,
+			})
+		case gotgbot.InputMediaAnimation:
+			_, err = b.SendAnimation(ctx.EffectiveChat.Id, inputMedias[0].GetMedia(), &gotgbot.SendAnimationOpts{
 				Caption:          caption,
 				ParseMode:        "MarkdownV2",
 				ReplyToMessageId: ctx.EffectiveMessage.MessageId,
