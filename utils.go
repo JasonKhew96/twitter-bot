@@ -154,19 +154,11 @@ func tweet2InputMedias(tweet *twitterscraper.Tweet, caption string) []gotgbot.In
 				} else {
 					media = buf
 				}
-				if len(tweet.Medias) == 1 && v.IsAnimatedGif {
-					inputMedia = append(inputMedia, gotgbot.InputMediaAnimation{
-						Media:     media,
-						Caption:   c,
-						ParseMode: "MarkdownV2",
-					})
-				} else {
-					inputMedia = append(inputMedia, gotgbot.InputMediaVideo{
-						Media:     media,
-						Caption:   c,
-						ParseMode: "MarkdownV2",
-					})
-				}
+				inputMedia = append(inputMedia, gotgbot.InputMediaVideo{
+					Media:     media,
+					Caption:   c,
+					ParseMode: "MarkdownV2",
+				})
 			}
 		}
 	}
