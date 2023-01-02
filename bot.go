@@ -181,6 +181,12 @@ func (bot *bot) worker() {
 					Caption:   caption,
 					ParseMode: "MarkdownV2",
 				})
+			case gotgbot.InputMediaAnimation:
+				caption := job.inputMedias[0].(gotgbot.InputMediaAnimation).Caption
+				msg, err = bot.tg.SendAnimation(bot.channelChatID, job.inputMedias[0].GetMedia(), &gotgbot.SendAnimationOpts{
+					Caption:   caption,
+					ParseMode: "MarkdownV2",
+				})
 			}
 			msgs = append(msgs, *msg)
 		}
@@ -331,6 +337,12 @@ func (bot *bot) handlePrivateMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 			})
 		case gotgbot.InputMediaVideo:
 			_, err = b.SendVideo(ctx.EffectiveChat.Id, inputMedias[0].GetMedia(), &gotgbot.SendVideoOpts{
+				Caption:          caption,
+				ParseMode:        "MarkdownV2",
+				ReplyToMessageId: ctx.EffectiveMessage.MessageId,
+			})
+		case gotgbot.InputMediaAnimation:
+			_, err = b.SendAnimation(ctx.EffectiveChat.Id, inputMedias[0].GetMedia(), &gotgbot.SendAnimationOpts{
 				Caption:          caption,
 				ParseMode:        "MarkdownV2",
 				ReplyToMessageId: ctx.EffectiveMessage.MessageId,
