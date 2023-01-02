@@ -123,16 +123,20 @@ func tweet2InputMedias(tweet *twitterscraper.Tweet, caption string) []gotgbot.In
 				}
 			}
 		}
-		for _, media := range tweet.Medias {
+		for i, media := range tweet.Medias {
 			c := ""
 			if len(inputMedia) == 0 {
 				c = caption
 			}
+			var fn string
 			switch v := media.(type) {
 			case twitterscraper.MediaPhoto:
 				newUrl := clearUrlQueries(v.Url)
+				splits := strings.Split(newUrl, ".")
+				ext := splits[len(splits)-1]
+				fn = fmt.Sprintf("%s_%02d.%s", tweet.ID, i+1, ext)
 				var media gotgbot.InputFile
-				buf, err := downloadToBuffer(newUrl, "")
+				buf, err := downloadToBuffer(newUrl, fn)
 				if err != nil {
 					log.Println(err)
 					media = newUrl
@@ -146,8 +150,11 @@ func tweet2InputMedias(tweet *twitterscraper.Tweet, caption string) []gotgbot.In
 				})
 			case twitterscraper.MediaVideo:
 				newUrl := clearUrlQueries(v.Url)
+				splits := strings.Split(newUrl, ".")
+				ext := splits[len(splits)-1]
+				fn = fmt.Sprintf("%s_%02d.%s", tweet.ID, i+1, ext)
 				var media gotgbot.InputFile
-				buf, err := downloadToBuffer(newUrl, "")
+				buf, err := downloadToBuffer(newUrl, fn)
 				if err != nil {
 					log.Println(err)
 					media = newUrl
