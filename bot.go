@@ -121,15 +121,7 @@ func (bot *bot) Close() {
 }
 
 func (bot *bot) initBot() error {
-	// Create updater and dispatcher.
-	updater := ext.NewUpdater(&ext.UpdaterOpts{
-		DispatcherOpts: ext.DispatcherOpts{
-			Error: func(b *gotgbot.Bot, ctx *ext.Context, err error) ext.DispatcherAction {
-				log.Println("an error occurred while handling update: ", err.Error())
-				return ext.DispatcherActionNoop
-			},
-		},
-	})
+	updater := ext.NewUpdater(nil)
 	dispatcher := updater.Dispatcher
 
 	dispatcher.AddHandler(handlers.NewMessage(func(msg *gotgbot.Message) bool {
