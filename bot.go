@@ -187,6 +187,9 @@ func (bot *bot) worker() {
 					Caption:   caption,
 					ParseMode: "MarkdownV2",
 				})
+			default:
+				log.Println("unknown media type ", job.inputMedias[0])
+				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("unknown media type in worker\n\n%+v", job.inputMedias), nil)
 			}
 			msgs = append(msgs, *msg)
 		}
