@@ -325,22 +325,23 @@ func (bot *bot) handlePrivateMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 	if len(inputMedias) > 1 {
 		_, err = b.SendMediaGroup(ctx.EffectiveChat.Id, inputMedias, nil)
 	} else if len(inputMedias) == 1 {
-		switch inputMedias[0].(type) {
+		inputMedia := inputMedias[0]
+		switch inputMedia.(type) {
 		case gotgbot.InputMediaPhoto:
-			_, err = b.SendPhoto(ctx.EffectiveChat.Id, inputMedias[0].GetMedia(), &gotgbot.SendPhotoOpts{
-				Caption:          caption,
+			_, err = b.SendPhoto(ctx.EffectiveChat.Id, inputMedia.GetMedia(), &gotgbot.SendPhotoOpts{
+				Caption:          inputMedia.(gotgbot.InputMediaPhoto).Caption,
 				ParseMode:        "MarkdownV2",
 				ReplyToMessageId: ctx.EffectiveMessage.MessageId,
 			})
 		case gotgbot.InputMediaVideo:
-			_, err = b.SendVideo(ctx.EffectiveChat.Id, inputMedias[0].GetMedia(), &gotgbot.SendVideoOpts{
-				Caption:          caption,
+			_, err = b.SendVideo(ctx.EffectiveChat.Id, inputMedia.GetMedia(), &gotgbot.SendVideoOpts{
+				Caption:          inputMedia.(gotgbot.InputMediaVideo).Caption,
 				ParseMode:        "MarkdownV2",
 				ReplyToMessageId: ctx.EffectiveMessage.MessageId,
 			})
 		case gotgbot.InputMediaAnimation:
-			_, err = b.SendAnimation(ctx.EffectiveChat.Id, inputMedias[0].GetMedia(), &gotgbot.SendAnimationOpts{
-				Caption:          caption,
+			_, err = b.SendAnimation(ctx.EffectiveChat.Id, inputMedia.GetMedia(), &gotgbot.SendAnimationOpts{
+				Caption:          inputMedia.(gotgbot.InputMediaAnimation).Caption,
 				ParseMode:        "MarkdownV2",
 				ReplyToMessageId: ctx.EffectiveMessage.MessageId,
 			})
@@ -771,10 +772,10 @@ func (bot *bot) processRetweet(tweet *entity.ParsedTweet) error {
 	log.Println("retweet", tweet.FavouriteCount, tweet.Views, tweet.Url)
 
 	caption := tweet2Caption(tweet)
-	inputMedia := tweet2InputMedias(tweet, caption)
+	inputMedias := tweet2InputMedias(tweet, caption)
 
 	bot.jobs <- Job{
-		inputMedias: inputMedia,
+		inputMedias: inputMedias,
 		cache: &twiCache{
 			tweetId: tweet.TweetId,
 			medias:  tweet.Entities.Media,
@@ -807,10 +808,10 @@ func (bot *bot) processTweet(tweet *entity.ParsedTweet) error {
 	log.Println("tweet", tweet.FavouriteCount, tweet.Views, tweet.Url)
 
 	caption := tweet2Caption(tweet)
-	inputMedia := tweet2InputMedias(tweet, caption)
+	inputMedias := tweet2InputMedias(tweet, caption)
 
 	bot.jobs <- Job{
-		inputMedias: inputMedia,
+		inputMedias: inputMedias,
 		cache: &twiCache{
 			tweetId: tweet.TweetId,
 			medias:  tweet.Entities.Media,
