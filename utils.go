@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	twitterscraper "github.com/JasonKhew96/twitter-scraper"
+	"github.com/JasonKhew96/twiscraper/entity"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/pkg/errors"
 )
@@ -97,44 +97,44 @@ func parseTwitterUrl(rawText string) (*TwitterUrl, error) {
 	return nil, errors.New("url is not a twitter url")
 }
 
-func tweet2Caption(tweet *twitterscraper.Tweet) string {
-	caption := fmt.Sprintf("%s\n\n%s", EscapeMarkdownV2(strings.ReplaceAll(tweet.Text, "＃", "#")), EscapeMarkdownV2(tweet.PermanentURL))
-	for _, mention := range tweet.Mentions {
-		caption = strings.Replace(caption, "@"+EscapeMarkdownV2(mention), fmt.Sprintf(`[@%s](https://twitter\.com/%s)`, EscapeMarkdownV2(mention), EscapeMarkdownV2(mention)), 1)
+func tweet2Caption(tweet *entity.ParsedTweet) string {
+	caption := fmt.Sprintf("%s\n\n%s", EscapeMarkdownV2(strings.ReplaceAll(tweet.FullText, "＃", "#")), EscapeMarkdownV2(tweet.Url))
+	for _, mention := range tweet.Entities.UserMentions {
+		caption = strings.Replace(caption, "@"+EscapeMarkdownV2(mention.ScreenName), fmt.Sprintf(`[@%s](https://twitter\.com/%s)`, EscapeMarkdownV2(mention.ScreenName), EscapeMarkdownV2(mention.ScreenName)), 1)
 	}
-	for _, hashtag := range tweet.Hashtags {
+	for _, hashtag := range tweet.Entities.Hashtags {
 		caption = strings.Replace(caption, "\\#"+EscapeMarkdownV2(hashtag), fmt.Sprintf(`[\#%s](https://twitter\.com/hashtag/%s)`, EscapeMarkdownV2(hashtag), EscapeMarkdownV2(hashtag)), 1)
 	}
 	return caption
 }
 
-func tweet2InputMedias(tweet *twitterscraper.Tweet, caption string) []gotgbot.InputMedia {
+func tweet2InputMedias(tweet *entity.ParsedTweet, caption string) []gotgbot.InputMedia {
 	inputMedia := []gotgbot.InputMedia{}
-	if len(tweet.Medias) > 0 {
-		for index, media := range tweet.Medias {
+	if len(tweet.Entities.Media) > 0 {
+		for index, media := range tweet.Entities.Media {
 			switch v := media.(type) {
-			case twitterscraper.MediaPhoto:
-				if v.Alt != "" {
-					caption += fmt.Sprintf("\n\n\\[%d\\] %s", index+1, EscapeMarkdownV2(v.Alt))
+			case entity.ParsedMediaPhoto:
+				if v.AltText != "" {
+					caption += fmt.Sprintf("\n\n\\[%d\\] %s", index+1, EscapeMarkdownV2(v.AltText))
 				}
-			case twitterscraper.MediaVideo:
-				if v.Alt != "" {
-					caption += fmt.Sprintf("\n\n\\[%d\\] %s", index+1, EscapeMarkdownV2(v.Alt))
+			case entity.ParsedMediaVideo:
+				if v.AltText != "" {
+					caption += fmt.Sprintf("\n\n\\[%d\\] %s", index+1, EscapeMarkdownV2(v.AltText))
 				}
 			}
 		}
-		for i, media := range tweet.Medias {
+		for i, media := range tweet.Entities.Media {
 			c := ""
 			if len(inputMedia) == 0 {
 				c = caption
 			}
 			var fn string
 			switch v := media.(type) {
-			case twitterscraper.MediaPhoto:
+			case entity.ParsedMediaPhoto:
 				newUrl := clearUrlQueries(v.Url)
 				splits := strings.Split(newUrl, ".")
 				ext := splits[len(splits)-1]
-				fn = fmt.Sprintf("%s_%02d.%s", tweet.ID, i+1, ext)
+				fn = fmt.Sprintf("%s_%02d.%s", tweet.TweetId, i+1, ext)
 				var media gotgbot.InputFile
 				buf, err := downloadToBuffer(newUrl, fn)
 				if err != nil {
@@ -148,11 +148,11 @@ func tweet2InputMedias(tweet *twitterscraper.Tweet, caption string) []gotgbot.In
 					Caption:   c,
 					ParseMode: "MarkdownV2",
 				})
-			case twitterscraper.MediaVideo:
+			case entity.ParsedMediaVideo:
 				newUrl := clearUrlQueries(v.Url)
 				splits := strings.Split(newUrl, ".")
 				ext := splits[len(splits)-1]
-				fn = fmt.Sprintf("%s_%02d.%s", tweet.ID, i+1, ext)
+				fn = fmt.Sprintf("%s_%02d.%s", tweet.TweetId, i+1, ext)
 				var media gotgbot.InputFile
 				buf, err := downloadToBuffer(newUrl, fn)
 				if err != nil {
@@ -161,7 +161,7 @@ func tweet2InputMedias(tweet *twitterscraper.Tweet, caption string) []gotgbot.In
 				} else {
 					media = buf
 				}
-				if len(tweet.Medias) == 1 && v.IsAnimatedGif {
+				if len(tweet.Entities.Media) == 1 && v.IsAnimatedGif {
 					inputMedia = append(inputMedia, gotgbot.InputMediaAnimation{
 						Media:     media,
 						Caption:   c,

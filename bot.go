@@ -12,7 +12,8 @@ import (
 	"time"
 	"twitter-bot/models"
 
-	twitterscraper "github.com/JasonKhew96/twitter-scraper"
+	"github.com/JasonKhew96/twiscraper"
+	"github.com/JasonKhew96/twiscraper/entity"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers"
@@ -26,7 +27,7 @@ import (
 
 type twiCache struct {
 	tweetId string
-	medias  []twitterscraper.Media
+	medias  []entity.ParsedMedia
 }
 
 type Job struct {
@@ -36,7 +37,7 @@ type Job struct {
 
 type bot struct {
 	db     *sql.DB
-	twit   *twitterscraper.Scraper
+	twit   *twiscraper.Scraper
 	tg     *gotgbot.Bot
 	caches map[int64]*twiCache
 	jobs   chan Job
@@ -87,9 +88,12 @@ func New() (*bot, error) {
 		);
 	*/
 
-	twit := twitterscraper.New().WithReplies(false).WithDelay(1).WithClientTimeout(time.Minute)
-	twit.WithCookie(config.TwitterCookie)
-	twit.WithXCsrfToken(config.XCsrfToken)
+	twit, err := twiscraper.New(twiscraper.ScraperOptions{
+		Delay:      time.Second,
+		Cookie:     config.TwitterCookie,
+		XCsrfToken: config.XCsrfToken,
+		Timeout:    time.Minute,
+	})
 
 	b, err := gotgbot.NewBot(config.TelegramBotToken, &gotgbot.BotOpts{
 		DefaultRequestOpts: &gotgbot.RequestOpts{
@@ -207,7 +211,7 @@ func (bot *bot) handleCallbackData(b *gotgbot.Bot, ctx *ext.Context) error {
 	username := strings.Split(ctx.CallbackQuery.Data, ".")[1]
 	switch {
 	case strings.HasPrefix(ctx.CallbackQuery.Data, "follow."):
-		profile, err := bot.twit.GetProfile(username)
+		profile, err := bot.twit.GetUserByScreenName(username)
 		if err != nil {
 			_, err := ctx.CallbackQuery.Answer(b, &gotgbot.AnswerCallbackQueryOpts{
 				Text:      fmt.Sprintf("Error GetProfile %s", err.Error()),
@@ -216,7 +220,7 @@ func (bot *bot) handleCallbackData(b *gotgbot.Bot, ctx *ext.Context) error {
 			})
 			return err
 		}
-		uid, err := strconv.ParseInt(profile.UserID, 10, 64)
+		uid, err := strconv.ParseInt(profile.UserId, 10, 64)
 		if err != nil {
 			_, err := ctx.CallbackQuery.Answer(b, &gotgbot.AnswerCallbackQueryOpts{
 				Text:      fmt.Sprintf("Error ParseInt %s", err.Error()),
@@ -233,8 +237,7 @@ func (bot *bot) handleCallbackData(b *gotgbot.Bot, ctx *ext.Context) error {
 			})
 			return err
 		}
-		_, err = bot.twit.Follow(profile.Username)
-		if err != nil {
+		if err := bot.twit.Follow(profile.ScreenName); err != nil {
 			_, err := ctx.CallbackQuery.Answer(b, &gotgbot.AnswerCallbackQueryOpts{
 				Text:      fmt.Sprintf("Error Follow %s", err.Error()),
 				ShowAlert: true,
@@ -249,7 +252,7 @@ func (bot *bot) handleCallbackData(b *gotgbot.Bot, ctx *ext.Context) error {
 		})
 		return err
 	case strings.HasPrefix(ctx.CallbackQuery.Data, "unfollow."):
-		profile, err := bot.twit.GetProfile(username)
+		profile, err := bot.twit.GetUserByScreenName(username)
 		if err != nil {
 			_, err := ctx.CallbackQuery.Answer(b, &gotgbot.AnswerCallbackQueryOpts{
 				Text:      fmt.Sprintf("Error GetProfile %s", err.Error()),
@@ -258,7 +261,7 @@ func (bot *bot) handleCallbackData(b *gotgbot.Bot, ctx *ext.Context) error {
 			})
 			return err
 		}
-		uid, err := strconv.ParseInt(profile.UserID, 10, 64)
+		uid, err := strconv.ParseInt(profile.UserId, 10, 64)
 		if err != nil {
 			_, err := ctx.CallbackQuery.Answer(b, &gotgbot.AnswerCallbackQueryOpts{
 				Text:      fmt.Sprintf("Error ParseInt %s", err.Error()),
@@ -273,8 +276,7 @@ func (bot *bot) handleCallbackData(b *gotgbot.Bot, ctx *ext.Context) error {
 		if err := t.Insert(context.Background(), bot.db, boil.Infer()); err != nil {
 			bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("Error Insert %s", err.Error()), nil)
 		}
-		_, err = bot.twit.Unfollow(profile.Username)
-		if err != nil {
+		if err := bot.twit.Unfollow(profile.ScreenName); err != nil {
 			_, err := ctx.CallbackQuery.Answer(b, &gotgbot.AnswerCallbackQueryOpts{
 				Text:      fmt.Sprintf("Error Unfollow %s", err.Error()),
 				ShowAlert: true,
@@ -312,7 +314,7 @@ func (bot *bot) handlePrivateMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 		return nil
 	}
 	tweetID := url.TweetID
-	tweet, err := bot.twit.GetTweet(tweetID)
+	tweet, err := bot.twit.GetTweetDetail(tweetID)
 	if err != nil {
 		_, err = ctx.EffectiveMessage.Reply(b, err.Error(), nil)
 		return err
@@ -358,11 +360,11 @@ func (bot *bot) handlePrivateMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 
 	urlList := []string{}
 	// urlList = append(urlList, tweet.Photos...)
-	for _, media := range tweet.Medias {
+	for _, media := range tweet.Entities.Media {
 		switch v := media.(type) {
-		case twitterscraper.MediaPhoto:
+		case entity.ParsedMediaPhoto:
 			urlList = append(urlList, clearUrlQueries(v.Url))
-		case twitterscraper.MediaVideo:
+		case entity.ParsedMediaVideo:
 			urlList = append(urlList, clearUrlQueries(v.Url))
 		}
 	}
@@ -385,7 +387,7 @@ func (bot *bot) handleChatMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 				var newUrl string
 				var fn string
 				switch v := media.(type) {
-				case twitterscraper.MediaPhoto:
+				case entity.ParsedMediaPhoto:
 					newUrl = clearUrlQueries(v.Url)
 					splits := strings.Split(newUrl, ".")
 					ext := splits[len(splits)-1]
@@ -393,7 +395,7 @@ func (bot *bot) handleChatMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 					if ext == "jpg" || ext == "jpeg" || ext == "png" {
 						newUrl = strings.TrimSuffix(newUrl, "."+ext) + "?format=" + ext + "&name=orig"
 					}
-				case twitterscraper.MediaVideo:
+				case entity.ParsedMediaVideo:
 					newUrl = clearUrlQueries(v.Url)
 					splits := strings.Split(newUrl, ".")
 					ext := splits[len(splits)-1]
@@ -451,13 +453,13 @@ func (bot *bot) commandFollow(b *gotgbot.Bot, ctx *ext.Context) error {
 		return err
 	}
 
-	profile, err := bot.twit.GetProfile(twitterUrl.Username)
+	profile, err := bot.twit.GetUserByScreenName(twitterUrl.Username)
 	if err != nil {
 		_, err = ctx.EffectiveMessage.Reply(b, fmt.Sprintf("Error GetProfile %s", err.Error()), nil)
 		return err
 	}
 
-	uid, err := strconv.ParseInt(profile.UserID, 10, 64)
+	uid, err := strconv.ParseInt(profile.UserId, 10, 64)
 	if err != nil {
 		_, err = ctx.EffectiveMessage.Reply(b, fmt.Sprintf("Error ParseInt %s", err.Error()), nil)
 		return err
@@ -468,8 +470,7 @@ func (bot *bot) commandFollow(b *gotgbot.Bot, ctx *ext.Context) error {
 		return err
 	}
 
-	_, err = bot.twit.Follow(profile.Username)
-	if err != nil {
+	if err := bot.twit.Follow(profile.ScreenName); err != nil {
 		_, err = ctx.EffectiveMessage.Reply(b, fmt.Sprintf("Error %s", err.Error()), nil)
 		return err
 	}
@@ -480,11 +481,11 @@ func (bot *bot) commandFollow(b *gotgbot.Bot, ctx *ext.Context) error {
 				{
 					{
 						Text:         "Follow",
-						CallbackData: "follow." + profile.Username,
+						CallbackData: "follow." + profile.ScreenName,
 					},
 					{
 						Text:         "Unfollow",
-						CallbackData: "unfollow." + profile.Username,
+						CallbackData: "unfollow." + profile.ScreenName,
 					},
 				},
 			},
@@ -519,13 +520,13 @@ func (bot *bot) commandUnfollow(b *gotgbot.Bot, ctx *ext.Context) error {
 		return err
 	}
 
-	profile, err := bot.twit.GetProfile(twitterUrl.Username)
+	profile, err := bot.twit.GetUserByScreenName(twitterUrl.Username)
 	if err != nil {
 		_, err = ctx.EffectiveMessage.Reply(b, fmt.Sprintf("Error GetProfile %s", err.Error()), nil)
 		return err
 	}
 
-	uid, err := strconv.ParseInt(profile.UserID, 10, 64)
+	uid, err := strconv.ParseInt(profile.UserId, 10, 64)
 	if err != nil {
 		_, err = ctx.EffectiveMessage.Reply(b, fmt.Sprintf("Error ParseInt %s", err.Error()), nil)
 		return err
@@ -538,8 +539,7 @@ func (bot *bot) commandUnfollow(b *gotgbot.Bot, ctx *ext.Context) error {
 		ctx.EffectiveMessage.Reply(b, fmt.Sprintf("Error %s", err.Error()), nil)
 	}
 
-	_, err = bot.twit.Unfollow(profile.Username)
-	if err != nil {
+	if err := bot.twit.Unfollow(profile.ScreenName); err != nil {
 		_, err = ctx.EffectiveMessage.Reply(b, fmt.Sprintf("Error %s", err.Error()), nil)
 		return err
 	}
@@ -550,11 +550,11 @@ func (bot *bot) commandUnfollow(b *gotgbot.Bot, ctx *ext.Context) error {
 				{
 					{
 						Text:         "Follow",
-						CallbackData: "follow." + profile.Username,
+						CallbackData: "follow." + profile.ScreenName,
 					},
 					{
 						Text:         "Unfollow",
-						CallbackData: "unfollow." + profile.Username,
+						CallbackData: "unfollow." + profile.ScreenName,
 					},
 				},
 			},
@@ -567,25 +567,25 @@ func (bot *bot) getTweetById(id int64) (*models.Tweet, error) {
 	return models.Tweets(qm.Where("id=?", id)).One(context.Background(), bot.db)
 }
 
-func (bot *bot) insertTweet(tweet *twitterscraper.Tweet) error {
-	id, err := strconv.ParseInt(tweet.ID, 10, 64)
+func (bot *bot) insertTweet(tweet *entity.ParsedTweet) error {
+	id, err := strconv.ParseInt(tweet.TweetId, 10, 64)
 	if err != nil {
 		return err
 	}
 
-	uid, err := strconv.ParseInt(tweet.UserID, 10, 64)
+	uid, err := strconv.ParseInt(tweet.ParsedUser.UserId, 10, 64)
 	if err != nil {
 		return err
 	}
 
 	medias := ""
-	if len(tweet.Medias) > 0 {
+	if len(tweet.Entities.Media) > 0 {
 		var urlList []string
-		for _, media := range tweet.Medias {
+		for _, media := range tweet.Entities.Media {
 			switch v := media.(type) {
-			case twitterscraper.MediaPhoto:
+			case entity.ParsedMediaPhoto:
 				urlList = append(urlList, clearUrlQueries(v.Url))
-			case twitterscraper.MediaVideo:
+			case entity.ParsedMediaVideo:
 				urlList = append(urlList, clearUrlQueries(v.Url))
 			}
 		}
@@ -593,15 +593,15 @@ func (bot *bot) insertTweet(tweet *twitterscraper.Tweet) error {
 	}
 
 	t := models.Tweet{
-		ID:        id,
-		Likes:     int64(tweet.Likes),
-		Retweets:  int64(tweet.Retweets),
-		Replies:   int64(tweet.Replies),
-		Medias:    medias,
-		Text:      null.StringFrom(tweet.Text),
-		HTML:      null.StringFrom(tweet.HTML),
-		Timestamp: time.Unix(tweet.Timestamp, 0),
-		URL:       tweet.PermanentURL,
+		ID:       id,
+		Likes:    int64(tweet.FavouriteCount),
+		Retweets: int64(tweet.RetweetedCount),
+		Replies:  int64(tweet.ReplyCount),
+		Medias:   medias,
+		Text:     null.StringFrom(tweet.FullText),
+		// HTML:      null.StringFrom(tweet.HTML),
+		Timestamp: tweet.CreatedAt,
+		URL:       tweet.Url,
 		UID:       uid,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -609,8 +609,8 @@ func (bot *bot) insertTweet(tweet *twitterscraper.Tweet) error {
 	return t.Insert(context.Background(), bot.db, boil.Infer())
 }
 
-func isMedia(tweet *twitterscraper.Tweet) bool {
-	return len(tweet.Medias) > 0
+func isMedia(tweet entity.ParsedTweet) bool {
+	return len(tweet.Entities.Media) > 0
 }
 
 func (bot *bot) isPopularRetweet(t time.Time, likes int) bool {
@@ -637,7 +637,7 @@ func (bot *bot) isPopularTweet(t time.Time, likes int) bool {
 	return false
 }
 
-func isRepost(tweet *twitterscraper.Tweet) bool {
+func isRepost(tweet *entity.ParsedTweet) bool {
 	forbiddenHashTags := []string{
 		"フォロー",
 		"フォロワー",
@@ -663,7 +663,7 @@ func isRepost(tweet *twitterscraper.Tweet) bool {
 	forbiddenTexts := []string{"再掲", "過去絵", "去年"}
 	forbiddenRegexTexts := []string{`(?i)\bwip\b`}
 
-	for _, hashTag := range tweet.Hashtags {
+	for _, hashTag := range tweet.Entities.Hashtags {
 		for _, f := range forbiddenHashTags {
 			if strings.Contains(hashTag, f) {
 				return true
@@ -677,12 +677,12 @@ func isRepost(tweet *twitterscraper.Tweet) bool {
 	}
 
 	for _, forbiddenText := range forbiddenTexts {
-		if strings.Contains(tweet.Text, forbiddenText) {
+		if strings.Contains(tweet.FullText, forbiddenText) {
 			return true
 		}
 	}
 	for _, forbiddenRegexText := range forbiddenRegexTexts {
-		if regexp.MustCompile(forbiddenRegexText).MatchString(tweet.Text) {
+		if regexp.MustCompile(forbiddenRegexText).MatchString(tweet.FullText) {
 			return true
 		}
 	}
@@ -701,12 +701,12 @@ func isIllustrator(text string) bool {
 	return false
 }
 
-func (bot *bot) processRetweet(tweet *twitterscraper.Tweet) error {
-	if !bot.isPopularRetweet(tweet.TimeParsed, tweet.Likes) {
+func (bot *bot) processRetweet(tweet *entity.ParsedTweet) error {
+	if !bot.isPopularRetweet(tweet.CreatedAt, tweet.FavouriteCount) {
 		return nil
 	}
 
-	id, err := strconv.ParseInt(tweet.ID, 10, 64)
+	id, err := strconv.ParseInt(tweet.TweetId, 10, 64)
 	if err != nil {
 		return err
 	}
@@ -714,12 +714,12 @@ func (bot *bot) processRetweet(tweet *twitterscraper.Tweet) error {
 		return nil
 	}
 
-	user, err := bot.twit.GetProfile(tweet.Username)
+	user, err := bot.twit.GetUserByScreenName(tweet.ParsedUser.ScreenName)
 	if err != nil {
 		return err
 	}
 
-	uid, err := strconv.ParseInt(user.UserID, 10, 64)
+	uid, err := strconv.ParseInt(user.UserId, 10, 64)
 	if err != nil {
 		return err
 	}
@@ -732,22 +732,22 @@ func (bot *bot) processRetweet(tweet *twitterscraper.Tweet) error {
 		return nil
 	}
 
-	if !isIllustrator(user.Biography) && !isIllustrator(user.Website) {
+	if !isIllustrator(user.Description) && !isIllustrator(user.Url) {
 		return nil
 	}
 	if !user.IsFollowing {
-		log.Println("Suggest", tweet.PermanentURL)
-		if _, err := bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("Followed https://twitter.com/%s", tweet.Username), &gotgbot.SendMessageOpts{
+		log.Println("Suggest", tweet.Url)
+		if _, err := bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("Followed https://twitter.com/%s", tweet.ParsedUser.ScreenName), &gotgbot.SendMessageOpts{
 			ReplyMarkup: gotgbot.InlineKeyboardMarkup{
 				InlineKeyboard: [][]gotgbot.InlineKeyboardButton{
 					{
 						{
 							Text:         "Follow",
-							CallbackData: "follow." + tweet.Username,
+							CallbackData: "follow." + tweet.ParsedUser.ScreenName,
 						},
 						{
 							Text:         "Unfollow",
-							CallbackData: "unfollow." + tweet.Username,
+							CallbackData: "unfollow." + tweet.ParsedUser.ScreenName,
 						},
 					},
 				},
@@ -755,7 +755,7 @@ func (bot *bot) processRetweet(tweet *twitterscraper.Tweet) error {
 		}); err != nil {
 			log.Println(err)
 		}
-		if _, err := bot.twit.Follow(tweet.Username); err != nil {
+		if err := bot.twit.Follow(tweet.ParsedUser.ScreenName); err != nil {
 			return err
 		}
 	}
@@ -768,7 +768,7 @@ func (bot *bot) processRetweet(tweet *twitterscraper.Tweet) error {
 		return nil
 	}
 
-	log.Println("retweet", tweet.Likes, tweet.SensitiveContent, tweet.PermanentURL)
+	log.Println("retweet", tweet.FavouriteCount, tweet.Views, tweet.Url)
 
 	caption := tweet2Caption(tweet)
 	inputMedia := tweet2InputMedias(tweet, caption)
@@ -776,20 +776,20 @@ func (bot *bot) processRetweet(tweet *twitterscraper.Tweet) error {
 	bot.jobs <- Job{
 		inputMedias: inputMedia,
 		cache: &twiCache{
-			tweetId: tweet.ID,
-			medias:  tweet.Medias,
+			tweetId: tweet.TweetId,
+			medias:  tweet.Entities.Media,
 		},
 	}
 
 	return nil
 }
 
-func (bot *bot) processTweet(tweet *twitterscraper.Tweet) error {
-	if !bot.isPopularTweet(tweet.TimeParsed, tweet.Likes) {
+func (bot *bot) processTweet(tweet *entity.ParsedTweet) error {
+	if !bot.isPopularTweet(tweet.CreatedAt, tweet.FavouriteCount) {
 		return nil
 	}
 
-	id, err := strconv.ParseInt(tweet.ID, 10, 64)
+	id, err := strconv.ParseInt(tweet.TweetId, 10, 64)
 	if err != nil {
 		return err
 	}
@@ -804,7 +804,7 @@ func (bot *bot) processTweet(tweet *twitterscraper.Tweet) error {
 		return nil
 	}
 
-	log.Println("tweet", tweet.Likes, tweet.SensitiveContent, tweet.PermanentURL)
+	log.Println("tweet", tweet.FavouriteCount, tweet.Views, tweet.Url)
 
 	caption := tweet2Caption(tweet)
 	inputMedia := tweet2InputMedias(tweet, caption)
@@ -812,8 +812,8 @@ func (bot *bot) processTweet(tweet *twitterscraper.Tweet) error {
 	bot.jobs <- Job{
 		inputMedias: inputMedia,
 		cache: &twiCache{
-			tweetId: tweet.ID,
-			medias:  tweet.Medias,
+			tweetId: tweet.TweetId,
+			medias:  tweet.Entities.Media,
 		},
 	}
 
@@ -831,38 +831,38 @@ func (bot *bot) newLoop() error {
 		}
 		bot.errCount = 0
 
-		if !isMedia(&tweet.Tweet) {
+		if !isMedia(tweet.ParsedTweet) {
 			continue
 		}
 
-		if tweet.IsRetweet && tweet.RetweetedStatus.UserID == tweet.UserID {
+		if tweet.ParsedTweet.IsRetweet && tweet.ParsedTweet.RetweetedTweet.ParsedUser.UserId == tweet.ParsedTweet.ParsedUser.UserId {
 			continue
 		}
 
-		if tweet.IsRetweet {
-			err := bot.processRetweet(tweet.RetweetedStatus)
+		if tweet.ParsedTweet.IsRetweet {
+			err := bot.processRetweet(tweet.ParsedTweet.RetweetedTweet)
 			if err != nil {
 				bot.errCount++
-				log.Println("processRetweet error", tweet.PermanentURL)
-				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processRetweet error %s", tweet.PermanentURL), nil)
+				log.Println("processRetweet error", tweet.ParsedTweet.Url)
+				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processRetweet error %s", tweet.ParsedTweet.Url), nil)
 				time.Sleep(time.Minute)
 				continue
 			}
-		} else if tweet.IsRecommended {
-			err := bot.processRetweet(&tweet.Tweet)
+		} else if tweet.ParsedTweet.IsRecommended {
+			err := bot.processRetweet(&tweet.ParsedTweet)
 			if err != nil {
 				bot.errCount++
-				log.Println("processRetweet recommended error", tweet.PermanentURL)
-				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processRetweet recommended error %s", tweet.PermanentURL), nil)
+				log.Println("processRetweet recommended error", tweet.ParsedTweet.Url)
+				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processRetweet recommended error %s", tweet.ParsedTweet.Url), nil)
 				time.Sleep(time.Minute)
 				continue
 			}
 		} else {
-			err := bot.processTweet(&tweet.Tweet)
+			err := bot.processTweet(&tweet.ParsedTweet)
 			if err != nil {
 				bot.errCount++
-				log.Println("processTweet error", tweet.PermanentURL)
-				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processTweet error %s", tweet.PermanentURL), nil)
+				log.Println("processTweet error", tweet.ParsedTweet.Url)
+				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processTweet error %s", tweet.ParsedTweet.Url), nil)
 				time.Sleep(time.Minute)
 				continue
 			}
@@ -882,38 +882,38 @@ func (bot *bot) newLoop() error {
 		}
 		bot.errCount = 0
 
-		if !isMedia(&tweet.Tweet) {
+		if !isMedia(tweet.ParsedTweet) {
 			continue
 		}
 
-		if tweet.IsRetweet && tweet.RetweetedStatus.UserID == tweet.UserID {
+		if tweet.ParsedTweet.IsRetweet && tweet.ParsedTweet.RetweetedTweet.ParsedUser.UserId == tweet.ParsedTweet.ParsedUser.UserId {
 			continue
 		}
 
-		if tweet.IsRetweet {
-			err := bot.processRetweet(tweet.RetweetedStatus)
+		if tweet.ParsedTweet.IsRetweet {
+			err := bot.processRetweet(tweet.ParsedTweet.RetweetedTweet)
 			if err != nil {
 				bot.errCount++
-				log.Println("processRetweet error", tweet.PermanentURL)
-				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processRetweet error %s", tweet.PermanentURL), nil)
+				log.Println("processRetweet error", tweet.ParsedTweet.Url)
+				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processRetweet error %s", tweet.ParsedTweet.Url), nil)
 				time.Sleep(time.Minute)
 				continue
 			}
-		} else if tweet.IsRecommended {
-			err := bot.processRetweet(&tweet.Tweet)
+		} else if tweet.ParsedTweet.IsRecommended {
+			err := bot.processRetweet(&tweet.ParsedTweet)
 			if err != nil {
 				bot.errCount++
-				log.Println("processRetweet recommended error", tweet.PermanentURL)
-				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processRetweet recommended error %s", tweet.PermanentURL), nil)
+				log.Println("processRetweet recommended error", tweet.ParsedTweet.Url)
+				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processRetweet recommended error %s", tweet.ParsedTweet.Url), nil)
 				time.Sleep(time.Minute)
 				continue
 			}
 		} else {
-			err := bot.processTweet(&tweet.Tweet)
+			err := bot.processTweet(&tweet.ParsedTweet)
 			if err != nil {
 				bot.errCount++
-				log.Println("processTweet error", tweet.PermanentURL)
-				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processTweet error %s", tweet.PermanentURL), nil)
+				log.Println("processTweet error", tweet.ParsedTweet.Url)
+				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processTweet error %s", tweet.ParsedTweet.Url), nil)
 				time.Sleep(time.Minute)
 				continue
 			}
