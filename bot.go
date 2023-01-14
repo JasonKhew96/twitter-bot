@@ -88,7 +88,7 @@ func New() (*bot, error) {
 		);
 	*/
 
-	twit, err := twiscraper.New(twiscraper.ScraperOptions{
+	twit, err := twiscraper.New(&twiscraper.ScraperOptions{
 		Delay:      time.Second,
 		Cookie:     config.TwitterCookie,
 		XCsrfToken: config.XCsrfToken,
