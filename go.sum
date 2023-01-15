@@ -73,6 +73,8 @@ github.com/JasonKhew96/twiscraper v0.0.0-20230114083925-1d8e1e4b510a h1:leZ1SfSx
 github.com/JasonKhew96/twiscraper v0.0.0-20230114083925-1d8e1e4b510a/go.mod h1:aeTkMKB4SEqRLZsXZhy1kUJNVP3MvUkfUNkl39bzAA0=
 github.com/JasonKhew96/twiscraper v0.0.0-20230114102136-670c72a76fb2 h1:bo7mZZsnnyDRH4vlVr49+ppLf6oFKb9xHfgw5Y+UYXU=
 github.com/JasonKhew96/twiscraper v0.0.0-20230114102136-670c72a76fb2/go.mod h1:aeTkMKB4SEqRLZsXZhy1kUJNVP3MvUkfUNkl39bzAA0=
+github.com/JasonKhew96/twiscraper v0.0.0-20230115042520-891bee3da4c0 h1:oAdJxOQksIjcN6ua3ou8iA6tdsfCq2/bVMdDW0pbh6Y=
+github.com/JasonKhew96/twiscraper v0.0.0-20230115042520-891bee3da4c0/go.mod h1:aeTkMKB4SEqRLZsXZhy1kUJNVP3MvUkfUNkl39bzAA0=
 github.com/Masterminds/goutils v1.1.1/go.mod h1:8cTjp+g8YejhMuvIA5y2vz3BpJxksy863GQaJW2MFNU=
 github.com/Masterminds/semver/v3 v3.1.1/go.mod h1:VPu/7SZ7ePZ3QOrcuXROw5FAcLl4a0cBrbBpGY/8hQs=
 github.com/Masterminds/sprig/v3 v3.2.2/go.mod h1:UoaO7Yp8KlPnJIYWTFkMaqPUYKTfGFPhxNuwnnxkKlk=
