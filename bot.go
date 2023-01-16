@@ -276,7 +276,7 @@ func (bot *bot) handleCallbackData(b *gotgbot.Bot, ctx *ext.Context) error {
 		if err := t.Insert(context.Background(), bot.db, boil.Infer()); err != nil {
 			bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("Error Insert %s", err.Error()), nil)
 		}
-		if err := bot.twit.Unfollow(profile.ScreenName); err != nil {
+		if err := bot.twit.UnFollow(profile.ScreenName); err != nil {
 			_, err := ctx.CallbackQuery.Answer(b, &gotgbot.AnswerCallbackQueryOpts{
 				Text:      fmt.Sprintf("Error Unfollow %s", err.Error()),
 				ShowAlert: true,
@@ -540,7 +540,7 @@ func (bot *bot) commandUnfollow(b *gotgbot.Bot, ctx *ext.Context) error {
 		ctx.EffectiveMessage.Reply(b, fmt.Sprintf("Error %s", err.Error()), nil)
 	}
 
-	if err := bot.twit.Unfollow(profile.ScreenName); err != nil {
+	if err := bot.twit.UnFollow(profile.ScreenName); err != nil {
 		_, err = ctx.EffectiveMessage.Reply(b, fmt.Sprintf("Error %s", err.Error()), nil)
 		return err
 	}
@@ -715,12 +715,7 @@ func (bot *bot) processRetweet(tweet *entity.ParsedTweet) error {
 		return nil
 	}
 
-	user, err := bot.twit.GetUserByScreenName(tweet.ParsedUser.ScreenName)
-	if err != nil {
-		return err
-	}
-
-	uid, err := strconv.ParseInt(user.UserId, 10, 64)
+	uid, err := strconv.ParseInt(tweet.ParsedUser.UserId, 10, 64)
 	if err != nil {
 		return err
 	}
@@ -733,10 +728,10 @@ func (bot *bot) processRetweet(tweet *entity.ParsedTweet) error {
 		return nil
 	}
 
-	if !isIllustrator(user.Description) && !isIllustrator(user.Url) {
+	if !isIllustrator(tweet.ParsedUser.Description) && !isIllustrator(tweet.ParsedUser.Url) {
 		return nil
 	}
-	if !user.IsFollowing {
+	if !tweet.ParsedUser.IsFollowing {
 		log.Println("Suggest", tweet.Url)
 		if _, err := bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("Followed https://twitter.com/%s", tweet.ParsedUser.ScreenName), &gotgbot.SendMessageOpts{
 			ReplyMarkup: gotgbot.InlineKeyboardMarkup{
