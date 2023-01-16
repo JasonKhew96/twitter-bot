@@ -732,7 +732,7 @@ func (bot *bot) processRetweet(tweet *entity.ParsedTweet) error {
 		return nil
 	}
 	if !tweet.ParsedUser.IsFollowing {
-		log.Println("Suggest", tweet.Url)
+		log.Println("Suggest", tweet.FavouriteCount, tweet.Views, tweet.Url)
 		if _, err := bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("Followed https://twitter.com/%s", tweet.ParsedUser.ScreenName), &gotgbot.SendMessageOpts{
 			ReplyMarkup: gotgbot.InlineKeyboardMarkup{
 				InlineKeyboard: [][]gotgbot.InlineKeyboardButton{
