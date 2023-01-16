@@ -825,7 +825,7 @@ func (bot *bot) newLoop() error {
 	for tweet := range bot.twit.GetHomeTimeline(context.Background(), 20*50) {
 		if tweet.Error != nil {
 			bot.errCount++
-			log.Println("GetHomeTimeline error")
+			log.Println("GetHomeTimeline error", tweet.Error)
 			bot.tg.SendMessage(bot.ownerID, "GetHomeTimeline error", nil)
 			time.Sleep(time.Minute)
 			break
@@ -844,7 +844,7 @@ func (bot *bot) newLoop() error {
 			err := bot.processRetweet(tweet.ParsedTweet.RetweetedTweet)
 			if err != nil {
 				bot.errCount++
-				log.Println("processRetweet error", tweet.ParsedTweet.Url)
+				log.Println("processRetweet error", tweet.ParsedTweet.Url, err)
 				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processRetweet error %s", tweet.ParsedTweet.Url), nil)
 				time.Sleep(time.Minute)
 				continue
@@ -853,7 +853,7 @@ func (bot *bot) newLoop() error {
 			err := bot.processRetweet(&tweet.ParsedTweet)
 			if err != nil {
 				bot.errCount++
-				log.Println("processRetweet recommended error", tweet.ParsedTweet.Url)
+				log.Println("processRetweet recommended error", tweet.ParsedTweet.Url, err)
 				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processRetweet recommended error %s", tweet.ParsedTweet.Url), nil)
 				time.Sleep(time.Minute)
 				continue
@@ -862,7 +862,7 @@ func (bot *bot) newLoop() error {
 			err := bot.processTweet(&tweet.ParsedTweet)
 			if err != nil {
 				bot.errCount++
-				log.Println("processTweet error", tweet.ParsedTweet.Url)
+				log.Println("processTweet error", tweet.ParsedTweet.Url, err)
 				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processTweet error %s", tweet.ParsedTweet.Url), nil)
 				time.Sleep(time.Minute)
 				continue
@@ -876,7 +876,7 @@ func (bot *bot) newLoop() error {
 	for tweet := range bot.twit.GetHomeLatestTimeline(context.Background(), 20*50) {
 		if tweet.Error != nil {
 			bot.errCount++
-			log.Println("GetHomeLatestTimeline error")
+			log.Println("GetHomeLatestTimeline error", tweet.Error)
 			bot.tg.SendMessage(bot.ownerID, "GetHomeLatestTimeline error", nil)
 			time.Sleep(time.Minute)
 			break
@@ -895,7 +895,7 @@ func (bot *bot) newLoop() error {
 			err := bot.processRetweet(tweet.ParsedTweet.RetweetedTweet)
 			if err != nil {
 				bot.errCount++
-				log.Println("processRetweet error", tweet.ParsedTweet.Url)
+				log.Println("processRetweet error", tweet.ParsedTweet.Url, err)
 				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processRetweet error %s", tweet.ParsedTweet.Url), nil)
 				time.Sleep(time.Minute)
 				continue
@@ -904,7 +904,7 @@ func (bot *bot) newLoop() error {
 			err := bot.processRetweet(&tweet.ParsedTweet)
 			if err != nil {
 				bot.errCount++
-				log.Println("processRetweet recommended error", tweet.ParsedTweet.Url)
+				log.Println("processRetweet recommended error", tweet.ParsedTweet.Url, err)
 				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processRetweet recommended error %s", tweet.ParsedTweet.Url), nil)
 				time.Sleep(time.Minute)
 				continue
@@ -913,7 +913,7 @@ func (bot *bot) newLoop() error {
 			err := bot.processTweet(&tweet.ParsedTweet)
 			if err != nil {
 				bot.errCount++
-				log.Println("processTweet error", tweet.ParsedTweet.Url)
+				log.Println("processTweet error", tweet.ParsedTweet.Url, err)
 				bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("processTweet error %s", tweet.ParsedTweet.Url), nil)
 				time.Sleep(time.Minute)
 				continue
