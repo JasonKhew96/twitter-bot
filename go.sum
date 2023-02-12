@@ -63,8 +63,8 @@ github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym
 github.com/DATA-DOG/go-sqlmock v1.4.1 h1:ThlnYciV1iM/V0OSF/dtkqWb6xo5qITT1TJBG1MRDJM=
 github.com/DATA-DOG/go-sqlmock v1.4.1/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
-github.com/JasonKhew96/twiscraper v0.0.0-20230212052752-c84697b3f2b5 h1:9sc7EQAbqDqRpw+QStu9FB70+6AsVp57ibZLhvtfPD0=
-github.com/JasonKhew96/twiscraper v0.0.0-20230212052752-c84697b3f2b5/go.mod h1:aeTkMKB4SEqRLZsXZhy1kUJNVP3MvUkfUNkl39bzAA0=
+github.com/JasonKhew96/twiscraper v0.0.0-20230212105055-93d02a4aacf7 h1:7rhJO3dKmOCsnwgKX8assqk7cuC4WN5EpYKP9upSpF8=
+github.com/JasonKhew96/twiscraper v0.0.0-20230212105055-93d02a4aacf7/go.mod h1:aeTkMKB4SEqRLZsXZhy1kUJNVP3MvUkfUNkl39bzAA0=
 github.com/Masterminds/goutils v1.1.1/go.mod h1:8cTjp+g8YejhMuvIA5y2vz3BpJxksy863GQaJW2MFNU=
 github.com/Masterminds/semver/v3 v3.1.1/go.mod h1:VPu/7SZ7ePZ3QOrcuXROw5FAcLl4a0cBrbBpGY/8hQs=
 github.com/Masterminds/sprig/v3 v3.2.2/go.mod h1:UoaO7Yp8KlPnJIYWTFkMaqPUYKTfGFPhxNuwnnxkKlk=
