@@ -135,6 +135,9 @@ func tweet2InputMedias(tweet *entity.ParsedTweet, caption string) []gotgbot.Inpu
 				splits := strings.Split(newUrl, ".")
 				ext := splits[len(splits)-1]
 				fn = fmt.Sprintf("%s_%02d.%s", tweet.TweetId, i+1, ext)
+				if ext == "jpg" || ext == "jpeg" || ext == "png" {
+					newUrl = strings.TrimSuffix(newUrl, "."+ext) + "?format=" + ext + "&name=large"
+				}
 				var media gotgbot.InputFile
 				buf, err := downloadToBuffer(newUrl, fn)
 				if err != nil {
