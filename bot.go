@@ -844,7 +844,7 @@ func (bot *bot) newLoop() error {
 				time.Sleep(time.Minute)
 				continue
 			}
-		} else if tweet.ParsedTweet.IsRecommended {
+		} else if tweet.ParsedTweet.IsRecommended || !tweet.ParsedTweet.ParsedUser.IsFollowing {
 			err := bot.processRetweet(&tweet.ParsedTweet)
 			if err != nil {
 				bot.errCount++
@@ -895,7 +895,7 @@ func (bot *bot) newLoop() error {
 				time.Sleep(time.Minute)
 				continue
 			}
-		} else if tweet.ParsedTweet.IsRecommended {
+		} else if tweet.ParsedTweet.IsRecommended || !tweet.ParsedTweet.ParsedUser.IsFollowing {
 			err := bot.processRetweet(&tweet.ParsedTweet)
 			if err != nil {
 				bot.errCount++
