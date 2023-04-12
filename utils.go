@@ -15,7 +15,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var allMdV2 = []string{"_", "*", "[", "]", "(", ")", "~", "`", ">", "#", "+", "-", "=", "|", "{", "}", ".", "!"}
+var allMdV2 = []string{"_", "*", "[", "]", "(", ")", "~", "`", ">", "#", "+", "-", "=", "|", "{", "}", ".", "!", "\\"}
 var mdV2Repl = strings.NewReplacer(func() (out []string) {
 	for _, x := range allMdV2 {
 		out = append(out, x, "\\"+x)
