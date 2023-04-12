@@ -1,6 +1,6 @@
 module twitter-bot
 
-go 1.18
+go 1.20
 
 require (
 	github.com/JasonKhew96/twiscraper v0.0.0-20230212105055-93d02a4aacf7
