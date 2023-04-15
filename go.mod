@@ -3,11 +3,11 @@ module twitter-bot
 go 1.20
 
 require (
-	github.com/JasonKhew96/twiscraper v0.0.0-20230212105055-93d02a4aacf7
+	github.com/JasonKhew96/twiscraper v0.0.0-20230415064303-229d0aa15cb2
 	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.16
 	github.com/friendsofgo/errors v0.9.2
 	github.com/kat-co/vala v0.0.0-20170210184112-42e1d8b61f12
-	github.com/lib/pq v1.10.7
+	github.com/lib/pq v1.10.8
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/spf13/viper v1.15.0
 	github.com/volatiletech/null/v8 v8.1.2
