@@ -70,7 +70,7 @@ func New() (*bot, error) {
 
 	/*
 		CREATE TABLE "unfollowed" (
-			"uid"			BIGINT NOT NULL UNIQUE PRIMARY KEY,
+			"uid"			BIGINT NOT NULL UNIQUE PRIMARY KEY
 		);
 		CREATE TABLE "tweets" (
 			"id"			BIGINT NOT NULL UNIQUE PRIMARY KEY,
