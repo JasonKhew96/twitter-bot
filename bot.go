@@ -701,7 +701,7 @@ func isRepost(tweet *entity.ParsedTweet) bool {
 
 // guess
 func isIllustrator(text string) bool {
-	keyword := []string{"pixiv", "skeb", "potofu"}
+	keyword := []string{"pixiv", "skeb", "potofu", "fanbox", "patreon", "rkgk"}
 	textLower := strings.ToLower(text)
 	for _, k := range keyword {
 		if strings.Contains(textLower, k) {
