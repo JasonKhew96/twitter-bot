@@ -192,6 +192,12 @@ func clearUrlQueries(link string) string {
 	return newUrl
 }
 
+type FileTooLargeError struct{}
+
+func (e *FileTooLargeError) Error() string {
+	return "file too large"
+}
+
 func downloadToBuffer(url, fn string) (*gotgbot.NamedFile, error) {
 	defaultClient := &http.Client{
 		Timeout: 60 * time.Second,
@@ -204,6 +210,10 @@ func downloadToBuffer(url, fn string) (*gotgbot.NamedFile, error) {
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, errors.New("failed to download file")
+	}
+
+	if resp.ContentLength > 50*1024*1024 {
+		return nil, &FileTooLargeError{}
 	}
 
 	buf := new(bytes.Buffer)
