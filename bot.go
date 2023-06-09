@@ -653,7 +653,7 @@ func isRepost(tweet *entity.ParsedTweet) bool {
 		`^いい\W+の日$`,
 		`を(見|み)せてください$`,
 		`見てみましょう$`,
-		`^自分の好きな`,
+		`^自分の`,
 		`^今までで`,
 		`^太ももは`,
 		`^見た`,
@@ -670,7 +670,7 @@ func isRepost(tweet *entity.ParsedTweet) bool {
 		`(?i)^novelai$`,
 		`(?i)^AIイラスト$`,
 	}
-	forbiddenTexts := []string{"再掲", "過去絵", "去年"}
+	forbiddenTexts := []string{"再掲", "過去絵", "去年", "あなたのサークル"}
 	forbiddenRegexTexts := []string{`(?i)\bwip\b`}
 
 	for _, hashTag := range tweet.Entities.Hashtags {
