@@ -103,7 +103,7 @@ func tweet2Caption(tweet *entity.ParsedTweet) string {
 		caption = strings.Replace(caption, "@"+EscapeMarkdownV2(mention.ScreenName), fmt.Sprintf(`[@%s](https://twitter\.com/%s)`, EscapeMarkdownV2(mention.ScreenName), EscapeMarkdownV2(mention.ScreenName)), 1)
 	}
 	for _, hashtag := range tweet.Entities.Hashtags {
-		caption = strings.Replace(caption, "\\#"+EscapeMarkdownV2(hashtag), fmt.Sprintf(`[\#%s](https://twitter\.com/hashtag/%s)`, EscapeMarkdownV2(hashtag), EscapeMarkdownV2(hashtag)), 1)
+		caption = strings.Replace(caption, "\\#"+EscapeMarkdownV2(hashtag), fmt.Sprintf(`[\#%s](https://twitter\.com/hashtag/%s)`, EscapeMarkdownV2(hashtag), EscapeMarkdownV2(url.QueryEscape(hashtag))), 1)
 	}
 	return caption
 }
