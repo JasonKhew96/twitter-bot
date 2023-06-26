@@ -711,9 +711,23 @@ func isIllustrator(text string) bool {
 	return false
 }
 
-func (bot *bot) processRetweet(tweet *entity.ParsedTweet) error {
-	if !bot.isPopularRetweet(tweet.CreatedAt, tweet.FavouriteCount) {
-		return nil
+func (bot *bot) processRetweet(tweet *entity.ParsedTweet, retweetUserId string) error {
+	isMentioned := false
+	for _, mention := range tweet.Entities.UserMentions {
+		if mention.UserId == retweetUserId {
+			isMentioned = true
+			break
+		}
+	}
+
+	if isMentioned {
+		if !bot.isPopularTweet(tweet.CreatedAt, tweet.FavouriteCount) {
+			return nil
+		}
+	} else {
+		if !bot.isPopularRetweet(tweet.CreatedAt, tweet.FavouriteCount) {
+			return nil
+		}
 	}
 
 	id, err := strconv.ParseInt(tweet.TweetId, 10, 64)
@@ -729,39 +743,41 @@ func (bot *bot) processRetweet(tweet *entity.ParsedTweet) error {
 		return err
 	}
 
-	count, err := models.Unfolloweds(models.UnfollowedWhere.UID.EQ(uid)).Count(context.Background(), bot.db)
-	if err != nil {
-		return err
-	}
-	if count > 0 {
-		return nil
-	}
+	if !isMentioned {
+		count, err := models.Unfolloweds(models.UnfollowedWhere.UID.EQ(uid)).Count(context.Background(), bot.db)
+		if err != nil {
+			return err
+		}
+		if count > 0 {
+			return nil
+		}
+		if !isIllustrator(tweet.ParsedUser.Description) && !isIllustrator(tweet.ParsedUser.Url) {
+			return nil
+		}
 
-	if !isIllustrator(tweet.ParsedUser.Description) && !isIllustrator(tweet.ParsedUser.Url) {
-		return nil
-	}
-	if !tweet.ParsedUser.IsFollowing {
-		log.Println("Suggest", tweet.FavouriteCount, tweet.Views, tweet.Url)
-		if _, err := bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("Followed https://twitter.com/%s", tweet.ParsedUser.ScreenName), &gotgbot.SendMessageOpts{
-			ReplyMarkup: gotgbot.InlineKeyboardMarkup{
-				InlineKeyboard: [][]gotgbot.InlineKeyboardButton{
-					{
+		if !tweet.ParsedUser.IsFollowing {
+			log.Println("Suggest", tweet.FavouriteCount, tweet.Views, tweet.Url)
+			if _, err := bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("Followed https://twitter.com/%s", tweet.ParsedUser.ScreenName), &gotgbot.SendMessageOpts{
+				ReplyMarkup: gotgbot.InlineKeyboardMarkup{
+					InlineKeyboard: [][]gotgbot.InlineKeyboardButton{
 						{
-							Text:         "Follow",
-							CallbackData: "follow." + tweet.ParsedUser.ScreenName,
-						},
-						{
-							Text:         "Unfollow",
-							CallbackData: "unfollow." + tweet.ParsedUser.ScreenName,
+							{
+								Text:         "Follow",
+								CallbackData: "follow." + tweet.ParsedUser.ScreenName,
+							},
+							{
+								Text:         "Unfollow",
+								CallbackData: "unfollow." + tweet.ParsedUser.ScreenName,
+							},
 						},
 					},
 				},
-			},
-		}); err != nil {
-			log.Println(err)
-		}
-		if err := bot.twit.Follow(tweet.ParsedUser.ScreenName); err != nil {
-			return err
+			}); err != nil {
+				log.Println(err)
+			}
+			if err := bot.twit.Follow(tweet.ParsedUser.ScreenName); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -845,7 +861,7 @@ func (bot *bot) newLoop() error {
 		}
 
 		if tweet.ParsedTweet.IsRetweet {
-			err := bot.processRetweet(tweet.ParsedTweet.RetweetedTweet)
+			err := bot.processRetweet(tweet.ParsedTweet.RetweetedTweet, tweet.ParsedTweet.ParsedUser.UserId)
 			if err != nil {
 				bot.errCount++
 				log.Println("processRetweet error", tweet.ParsedTweet.Url, err)
@@ -854,7 +870,7 @@ func (bot *bot) newLoop() error {
 				continue
 			}
 		} else if tweet.ParsedTweet.IsRecommended || !tweet.ParsedTweet.ParsedUser.IsFollowing {
-			err := bot.processRetweet(&tweet.ParsedTweet)
+			err := bot.processRetweet(&tweet.ParsedTweet, "")
 			if err != nil {
 				bot.errCount++
 				log.Println("processRetweet recommended error", tweet.ParsedTweet.Url, err)
@@ -896,7 +912,7 @@ func (bot *bot) newLoop() error {
 		}
 
 		if tweet.ParsedTweet.IsRetweet {
-			err := bot.processRetweet(tweet.ParsedTweet.RetweetedTweet)
+			err := bot.processRetweet(tweet.ParsedTweet.RetweetedTweet, tweet.ParsedTweet.ParsedUser.UserId)
 			if err != nil {
 				bot.errCount++
 				log.Println("processRetweet error", tweet.ParsedTweet.Url, err)
@@ -905,7 +921,7 @@ func (bot *bot) newLoop() error {
 				continue
 			}
 		} else if tweet.ParsedTweet.IsRecommended || !tweet.ParsedTweet.ParsedUser.IsFollowing {
-			err := bot.processRetweet(&tweet.ParsedTweet)
+			err := bot.processRetweet(&tweet.ParsedTweet, "")
 			if err != nil {
 				bot.errCount++
 				log.Println("processRetweet recommended error", tweet.ParsedTweet.Url, err)
