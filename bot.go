@@ -326,22 +326,22 @@ func (bot *bot) handlePrivateMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 		_, err = b.SendMediaGroup(ctx.EffectiveChat.Id, inputMedias, nil)
 	} else if len(inputMedias) == 1 {
 		inputMedia := inputMedias[0]
-		switch inputMedia.(type) {
+		switch media := inputMedia.(type) {
 		case gotgbot.InputMediaPhoto:
 			_, err = b.SendPhoto(ctx.EffectiveChat.Id, inputMedia.GetMedia(), &gotgbot.SendPhotoOpts{
-				Caption:          inputMedia.(gotgbot.InputMediaPhoto).Caption,
+				Caption:          media.Caption,
 				ParseMode:        "MarkdownV2",
 				ReplyToMessageId: ctx.EffectiveMessage.MessageId,
 			})
 		case gotgbot.InputMediaVideo:
 			_, err = b.SendVideo(ctx.EffectiveChat.Id, inputMedia.GetMedia(), &gotgbot.SendVideoOpts{
-				Caption:          inputMedia.(gotgbot.InputMediaVideo).Caption,
+				Caption:          media.Caption,
 				ParseMode:        "MarkdownV2",
 				ReplyToMessageId: ctx.EffectiveMessage.MessageId,
 			})
 		case gotgbot.InputMediaAnimation:
 			_, err = b.SendAnimation(ctx.EffectiveChat.Id, inputMedia.GetMedia(), &gotgbot.SendAnimationOpts{
-				Caption:          inputMedia.(gotgbot.InputMediaAnimation).Caption,
+				Caption:          media.Caption,
 				ParseMode:        "MarkdownV2",
 				ReplyToMessageId: ctx.EffectiveMessage.MessageId,
 			})
