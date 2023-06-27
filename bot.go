@@ -712,11 +712,30 @@ func isIllustrator(text string) bool {
 }
 
 func (bot *bot) processRetweet(tweet *entity.ParsedTweet, retweetUserId string) error {
+	tweetDetail, err := bot.twit.GetTweetDetail(tweet.TweetId)
+	if err != nil {
+		log.Printf("GetTweetDetail error while processing retweet: %v", err)
+	} else {
+		tweet = tweetDetail
+	}
+
 	isMentioned := false
 	for _, mention := range tweet.Entities.UserMentions {
 		if mention.UserId == retweetUserId {
 			isMentioned = true
 			break
+		}
+	}
+	for _, innerReplies := range tweet.Replies {
+		for _, reply := range innerReplies {
+			if tweet.ParsedUser.UserId == reply.ParsedUser.UserId {
+				for _, mention := range tweet.Entities.UserMentions {
+					if mention.UserId == retweetUserId {
+						isMentioned = true
+						break
+					}
+				}
+			}
 		}
 	}
 
