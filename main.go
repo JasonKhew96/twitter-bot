@@ -29,5 +29,5 @@ func (bot *bot) loop() {
 	if err := bot.newLoop(); err != nil {
 		log.Fatal(err)
 	}
-	time.AfterFunc(5*time.Minute, bot.loop)
+	time.AfterFunc(time.Minute, bot.loop)
 }
