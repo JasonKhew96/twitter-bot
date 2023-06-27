@@ -94,6 +94,9 @@ func New() (*bot, error) {
 		XCsrfToken: config.XCsrfToken,
 		Timeout:    time.Minute,
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	b, err := gotgbot.NewBot(config.TelegramBotToken, &gotgbot.BotOpts{
 		DefaultRequestOpts: &gotgbot.RequestOpts{
