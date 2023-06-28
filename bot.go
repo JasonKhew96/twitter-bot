@@ -752,12 +752,11 @@ func (bot *bot) processRetweet(tweet *entity.ParsedTweet, retweetUserId string) 
 		}
 	}
 
-	uid, err := strconv.ParseInt(tweet.ParsedUser.UserId, 10, 64)
-	if err != nil {
-		return err
-	}
-
 	if !isMentioned {
+		uid, err := strconv.ParseInt(tweet.ParsedUser.UserId, 10, 64)
+		if err != nil {
+			return err
+		}
 		count, err := models.Unfolloweds(models.UnfollowedWhere.UID.EQ(uid)).Count(context.Background(), bot.db)
 		if err != nil {
 			return err
