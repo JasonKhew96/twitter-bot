@@ -731,12 +731,13 @@ func (bot *bot) processRetweet(tweet *entity.ParsedTweet, retweetUserId string) 
 		}
 	}
 
+OutsideLoop:
 	for _, innerReplies := range tweet.Replies {
 		for _, reply := range innerReplies {
 			for _, mention := range reply.Entities.UserMentions {
 				if tweet.ParsedUser.UserId == reply.ParsedUser.UserId && mention.UserId == retweetUserId {
 					isMentioned = true
-					break
+					break OutsideLoop
 				}
 			}
 		}
