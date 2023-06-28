@@ -715,6 +715,14 @@ func isIllustrator(text string) bool {
 }
 
 func (bot *bot) processRetweet(tweet *entity.ParsedTweet, retweetUserId string) error {
+	id, err := strconv.ParseInt(tweet.TweetId, 10, 64)
+	if err != nil {
+		return err
+	}
+	if d, err := bot.getTweetById(id); err == nil && d != nil {
+		return nil
+	}
+
 	isMentioned := false
 	for _, mention := range tweet.Entities.UserMentions {
 		if mention.UserId == retweetUserId {
@@ -731,14 +739,6 @@ func (bot *bot) processRetweet(tweet *entity.ParsedTweet, retweetUserId string) 
 		if !bot.isPopularRetweet(tweet.CreatedAt, tweet.FavouriteCount) {
 			return nil
 		}
-	}
-
-	id, err := strconv.ParseInt(tweet.TweetId, 10, 64)
-	if err != nil {
-		return err
-	}
-	if d, err := bot.getTweetById(id); err == nil && d != nil {
-		return nil
 	}
 
 	uid, err := strconv.ParseInt(tweet.ParsedUser.UserId, 10, 64)
