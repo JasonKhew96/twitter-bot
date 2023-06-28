@@ -731,6 +731,17 @@ func (bot *bot) processRetweet(tweet *entity.ParsedTweet, retweetUserId string) 
 		}
 	}
 
+	for _, innerReplies := range tweet.Replies {
+		for _, reply := range innerReplies {
+			for _, mention := range reply.Entities.UserMentions {
+				if tweet.ParsedUser.UserId == reply.ParsedUser.UserId && mention.UserId == retweetUserId {
+					isMentioned = true
+					break
+				}
+			}
+		}
+	}
+
 	if isMentioned {
 		if !bot.isPopularTweet(tweet.CreatedAt, tweet.FavouriteCount) {
 			return nil
