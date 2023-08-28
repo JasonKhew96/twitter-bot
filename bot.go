@@ -856,7 +856,7 @@ func (bot *bot) processTweet(tweet *entity.ParsedTweet) error {
 }
 
 func (bot *bot) newLoop() error {
-	for tweet := range bot.twit.GetHomeTimeline(context.Background(), 20*100) {
+	for tweet := range bot.twit.GetHomeTimeline(context.Background(), 20*20) {
 		if tweet.Error != nil {
 			bot.errCount++
 			log.Println("GetHomeTimeline error", tweet.Error)
@@ -907,7 +907,7 @@ func (bot *bot) newLoop() error {
 		return fmt.Errorf("TOO MUCH ERROR")
 	}
 	time.Sleep(5 * time.Second)
-	for tweet := range bot.twit.GetHomeLatestTimeline(context.Background(), 20*100) {
+	for tweet := range bot.twit.GetHomeLatestTimeline(context.Background(), 20*20) {
 		if tweet.Error != nil {
 			bot.errCount++
 			log.Println("GetHomeLatestTimeline error", tweet.Error)
