@@ -26,8 +26,14 @@ func (bot *bot) loop() {
 	if err := bot.cleanup(); err != nil {
 		log.Fatal(err)
 	}
-	if err := bot.newLoop(); err != nil {
+	count, err := bot.newLoop()
+	if err != nil {
 		log.Fatal(err)
 	}
-	time.AfterFunc(5*time.Minute, bot.loop)
+	wait := 5 * time.Minute
+	if count == 0 {
+		wait = 15 * time.Minute
+	}
+
+	time.AfterFunc(wait, bot.loop)
 }

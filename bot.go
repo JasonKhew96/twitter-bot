@@ -714,13 +714,13 @@ func isIllustrator(text string) bool {
 	return false
 }
 
-func (bot *bot) processRetweet(tweet *entity.ParsedTweet, retweetUserId string) error {
+func (bot *bot) processRetweet(tweet *entity.ParsedTweet, retweetUserId string) (bool, error) {
 	id, err := strconv.ParseInt(tweet.TweetId, 10, 64)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if d, err := bot.getTweetById(id); err == nil && d != nil {
-		return nil
+		return false, nil
 	}
 
 	isMentioned := false
@@ -745,28 +745,28 @@ OutsideLoop:
 
 	if isMentioned {
 		if !bot.isPopularTweet(tweet.CreatedAt, tweet.FavouriteCount) {
-			return nil
+			return false, nil
 		}
 	} else {
 		if !bot.isPopularRetweet(tweet.CreatedAt, tweet.FavouriteCount) {
-			return nil
+			return false, nil
 		}
 	}
 
 	if !isMentioned {
 		uid, err := strconv.ParseInt(tweet.ParsedUser.UserId, 10, 64)
 		if err != nil {
-			return err
+			return false, err
 		}
 		count, err := models.Unfolloweds(models.UnfollowedWhere.UID.EQ(uid)).Count(context.Background(), bot.db)
 		if err != nil {
-			return err
+			return false, err
 		}
 		if count > 0 {
-			return nil
+			return false, nil
 		}
 		if !isIllustrator(tweet.ParsedUser.Description) && !isIllustrator(tweet.ParsedUser.Url) {
-			return nil
+			return false, nil
 		}
 
 		if !tweet.ParsedUser.IsFollowing {
@@ -790,17 +790,17 @@ OutsideLoop:
 				log.Println(err)
 			}
 			if err := bot.twit.Follow(tweet.ParsedUser.ScreenName); err != nil {
-				return err
+				return false, err
 			}
 		}
 	}
 
 	if err := bot.insertTweet(tweet); err != nil {
-		return err
+		return false, err
 	}
 
 	if isRepost(tweet) {
-		return nil
+		return false, nil
 	}
 
 	log.Println("retweet", tweet.FavouriteCount, tweet.Views, tweet.Url)
@@ -816,27 +816,27 @@ OutsideLoop:
 		},
 	}
 
-	return nil
+	return true, nil
 }
 
-func (bot *bot) processTweet(tweet *entity.ParsedTweet) error {
+func (bot *bot) processTweet(tweet *entity.ParsedTweet) (bool, error) {
 	if !bot.isPopularTweet(tweet.CreatedAt, tweet.FavouriteCount) {
-		return nil
+		return false, nil
 	}
 
 	id, err := strconv.ParseInt(tweet.TweetId, 10, 64)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if d, err := bot.getTweetById(id); err == nil && d != nil {
-		return nil
+		return false, nil
 	}
 	if err := bot.insertTweet(tweet); err != nil {
-		return err
+		return false, err
 	}
 
 	if isRepost(tweet) {
-		return nil
+		return false, nil
 	}
 
 	log.Println("tweet", tweet.FavouriteCount, tweet.Views, tweet.Url)
@@ -852,11 +852,12 @@ func (bot *bot) processTweet(tweet *entity.ParsedTweet) error {
 		},
 	}
 
-	return nil
+	return true, nil
 }
 
-func (bot *bot) newLoop() error {
-	for tweet := range bot.twit.GetHomeTimeline(context.Background(), 20*20) {
+func (bot *bot) newLoop() (int, error) {
+	var count int
+	for tweet := range bot.twit.GetHomeTimeline(context.Background(), 1*20) {
 		if tweet.Error != nil {
 			bot.errCount++
 			log.Println("GetHomeTimeline error", tweet.Error)
@@ -875,7 +876,7 @@ func (bot *bot) newLoop() error {
 		}
 
 		if tweet.ParsedTweet.IsRetweet {
-			err := bot.processRetweet(tweet.ParsedTweet.RetweetedTweet, tweet.ParsedTweet.ParsedUser.UserId)
+			_, err := bot.processRetweet(tweet.ParsedTweet.RetweetedTweet, tweet.ParsedTweet.ParsedUser.UserId)
 			if err != nil {
 				bot.errCount++
 				log.Println("processRetweet error", tweet.ParsedTweet.Url, err)
@@ -884,7 +885,7 @@ func (bot *bot) newLoop() error {
 				continue
 			}
 		} else if tweet.ParsedTweet.IsRecommended || !tweet.ParsedTweet.ParsedUser.IsFollowing {
-			err := bot.processRetweet(&tweet.ParsedTweet, "")
+			_, err := bot.processRetweet(&tweet.ParsedTweet, "")
 			if err != nil {
 				bot.errCount++
 				log.Println("processRetweet recommended error", tweet.ParsedTweet.Url, err)
@@ -893,7 +894,7 @@ func (bot *bot) newLoop() error {
 				continue
 			}
 		} else {
-			err := bot.processTweet(&tweet.ParsedTweet)
+			_, err := bot.processTweet(&tweet.ParsedTweet)
 			if err != nil {
 				bot.errCount++
 				log.Println("processTweet error", tweet.ParsedTweet.Url, err)
@@ -904,10 +905,10 @@ func (bot *bot) newLoop() error {
 		}
 	}
 	if bot.errCount > 5 {
-		return fmt.Errorf("TOO MUCH ERROR")
+		return -1, fmt.Errorf("TOO MUCH ERROR")
 	}
 	time.Sleep(5 * time.Second)
-	for tweet := range bot.twit.GetHomeLatestTimeline(context.Background(), 20*20) {
+	for tweet := range bot.twit.GetHomeLatestTimeline(context.Background(), 10*20) {
 		if tweet.Error != nil {
 			bot.errCount++
 			log.Println("GetHomeLatestTimeline error", tweet.Error)
@@ -926,7 +927,7 @@ func (bot *bot) newLoop() error {
 		}
 
 		if tweet.ParsedTweet.IsRetweet {
-			err := bot.processRetweet(tweet.ParsedTweet.RetweetedTweet, tweet.ParsedTweet.ParsedUser.UserId)
+			ok, err := bot.processRetweet(tweet.ParsedTweet.RetweetedTweet, tweet.ParsedTweet.ParsedUser.UserId)
 			if err != nil {
 				bot.errCount++
 				log.Println("processRetweet error", tweet.ParsedTweet.Url, err)
@@ -934,8 +935,11 @@ func (bot *bot) newLoop() error {
 				time.Sleep(time.Minute)
 				continue
 			}
+			if ok {
+				count++
+			}
 		} else if tweet.ParsedTweet.IsRecommended || !tweet.ParsedTweet.ParsedUser.IsFollowing {
-			err := bot.processRetweet(&tweet.ParsedTweet, "")
+			ok, err := bot.processRetweet(&tweet.ParsedTweet, "")
 			if err != nil {
 				bot.errCount++
 				log.Println("processRetweet recommended error", tweet.ParsedTweet.Url, err)
@@ -943,8 +947,11 @@ func (bot *bot) newLoop() error {
 				time.Sleep(time.Minute)
 				continue
 			}
+			if ok {
+				count++
+			}
 		} else {
-			err := bot.processTweet(&tweet.ParsedTweet)
+			ok, err := bot.processTweet(&tweet.ParsedTweet)
 			if err != nil {
 				bot.errCount++
 				log.Println("processTweet error", tweet.ParsedTweet.Url, err)
@@ -952,12 +959,15 @@ func (bot *bot) newLoop() error {
 				time.Sleep(time.Minute)
 				continue
 			}
+			if ok {
+				count++
+			}
 		}
 	}
 	if bot.errCount > 5 {
-		return fmt.Errorf("TOO MUCH ERROR")
+		return -1, fmt.Errorf("TOO MUCH ERROR")
 	}
-	return nil
+	return count, nil
 }
 
 func (bot *bot) cleanup() error {
