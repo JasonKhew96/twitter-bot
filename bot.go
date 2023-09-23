@@ -146,6 +146,9 @@ func (bot *bot) initBot() error {
 		DropPendingUpdates: true,
 		GetUpdatesOpts: &gotgbot.GetUpdatesOpts{
 			Timeout: 60,
+			RequestOpts: &gotgbot.RequestOpts{
+				Timeout: time.Minute,
+			},
 		},
 	})
 	if err != nil {
