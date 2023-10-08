@@ -49,7 +49,7 @@ func parseTwitterUrl(rawText string) (*TwitterUrl, error) {
 		return nil, errors.Wrap(err, "failed to parse url")
 	}
 
-	if !strings.HasSuffix(parsedUrl.Host, "twitter.com") {
+	if !strings.HasSuffix(parsedUrl.Host, "twitter.com") && !strings.HasSuffix(parsedUrl.Host, "x.com") {
 		return nil, errors.New("url is not a twitter url")
 	}
 
