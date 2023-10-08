@@ -200,7 +200,7 @@ func (e *FileTooLargeError) Error() string {
 
 func downloadToBuffer(url, fn string) (*gotgbot.NamedFile, error) {
 	defaultClient := &http.Client{
-		Timeout: 60 * time.Second,
+		Timeout: 15 * time.Second,
 	}
 	resp, err := defaultClient.Get(url)
 	if err != nil {

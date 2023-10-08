@@ -100,7 +100,7 @@ func New() (*bot, error) {
 
 	b, err := gotgbot.NewBot(config.TelegramBotToken, &gotgbot.BotOpts{
 		RequestOpts: &gotgbot.RequestOpts{
-			Timeout: time.Minute,
+			Timeout: 15 * time.Second,
 		},
 	})
 	if err != nil {
@@ -147,7 +147,7 @@ func (bot *bot) initBot() error {
 		GetUpdatesOpts: &gotgbot.GetUpdatesOpts{
 			Timeout: 60,
 			RequestOpts: &gotgbot.RequestOpts{
-				Timeout: time.Minute,
+				Timeout: 15 * time.Second,
 			},
 		},
 	})
