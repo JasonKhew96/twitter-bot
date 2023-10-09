@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
@@ -98,9 +99,18 @@ func New() (*bot, error) {
 		return nil, err
 	}
 
+	botClient := &gotgbot.BaseBotClient{
+		Client:             http.Client{},
+		UseTestEnvironment: false,
+		DefaultRequestOpts: &gotgbot.RequestOpts{
+			Timeout: 60 * time.Second,
+		},
+	}
+
 	b, err := gotgbot.NewBot(config.TelegramBotToken, &gotgbot.BotOpts{
+		BotClient: botClient,
 		RequestOpts: &gotgbot.RequestOpts{
-			Timeout: 15 * time.Second,
+			Timeout: 60 * time.Second,
 		},
 	})
 	if err != nil {
@@ -143,11 +153,12 @@ func (bot *bot) initBot() error {
 
 	// Start receiving updates.
 	err := updater.StartPolling(bot.tg, &ext.PollingOpts{
-		DropPendingUpdates: true,
+		DropPendingUpdates:    true,
+		EnableWebhookDeletion: true,
 		GetUpdatesOpts: &gotgbot.GetUpdatesOpts{
 			Timeout: 60,
 			RequestOpts: &gotgbot.RequestOpts{
-				Timeout: 15 * time.Second,
+				Timeout: 60 * time.Second,
 			},
 		},
 	})
