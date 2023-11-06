@@ -17,6 +17,7 @@ type Config struct {
 	OwnerID              int64
 	PopularTweetFactor   int
 	PopularRetweetFactor int
+	BotApiUrl            string
 }
 
 func loadConfig() (*Config, error) {
@@ -84,6 +85,7 @@ func loadConfig() (*Config, error) {
 	if popularRetweetFactor == 0 || err != nil {
 		return nil, errors.Wrap(err, "POPULAR_RETWEET_FACTOR is not a number")
 	}
+	botApiUrl := os.Getenv("BOT_API_URL")
 
 	return &Config{
 		DatabaseUrl:          databaseUrl,
@@ -95,5 +97,6 @@ func loadConfig() (*Config, error) {
 		OwnerID:              ownerID,
 		PopularTweetFactor:   popularTweetFactor,
 		PopularRetweetFactor: popularRetweetFactor,
+		BotApiUrl:            botApiUrl,
 	}, nil
 }

@@ -51,6 +51,8 @@ type bot struct {
 
 	popularTweetFactor   int
 	popularRetweetFactor int
+
+	botApiUrl string
 }
 
 func New() (*bot, error) {
@@ -111,6 +113,7 @@ func New() (*bot, error) {
 		BotClient: botClient,
 		RequestOpts: &gotgbot.RequestOpts{
 			Timeout: 60 * time.Second,
+			APIURL:  config.BotApiUrl,
 		},
 	})
 	if err != nil {
@@ -129,6 +132,7 @@ func New() (*bot, error) {
 		ownerID:              config.OwnerID,
 		popularTweetFactor:   config.PopularTweetFactor,
 		popularRetweetFactor: config.PopularRetweetFactor,
+		botApiUrl:            config.BotApiUrl,
 	}, nil
 }
 
@@ -159,6 +163,7 @@ func (bot *bot) initBot() error {
 			Timeout: 60,
 			RequestOpts: &gotgbot.RequestOpts{
 				Timeout: 60 * time.Second,
+				APIURL:  bot.botApiUrl,
 			},
 		},
 	})
