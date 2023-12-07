@@ -102,10 +102,12 @@ func New() (*bot, error) {
 	}
 
 	botClient := &gotgbot.BaseBotClient{
-		Client:             http.Client{},
-		UseTestEnvironment: false,
+		Client: http.Client{
+			Timeout: 60 * time.Second,
+		},
 		DefaultRequestOpts: &gotgbot.RequestOpts{
 			Timeout: 60 * time.Second,
+			APIURL:  config.BotApiUrl,
 		},
 	}
 
