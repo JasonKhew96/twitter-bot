@@ -899,7 +899,7 @@ func (bot *bot) processTweet(tweet *entity.ParsedTweet) (bool, error) {
 
 func (bot *bot) newLoop() (int, error) {
 	var count int
-	for tweet := range bot.twit.GetHomeTimeline(context.Background(), 1*20) {
+	for tweet := range bot.twit.GetHomeTimeline(context.Background(), 5*20) {
 		if tweet.Error != nil {
 			bot.errCount++
 			log.Println("GetHomeTimeline error", tweet.Error)
