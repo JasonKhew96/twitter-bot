@@ -422,12 +422,9 @@ func (bot *bot) handleChatMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 	if !ctx.Message.IsAutomaticForward && ctx.Message.SenderChat.Id != bot.channelChatID {
 		return nil
 	}
-	if ctx.Message.ForwardOrigin.GetType() != "channel" {
-		return nil
-	}
-	forwardOrigin := ctx.Message.ForwardOrigin.(*gotgbot.MessageOriginChannel)
-	if c, ok := bot.caches[forwardOrigin.MessageId]; ok {
-		defer delete(bot.caches, forwardOrigin.MessageId)
+	messageOrigin := ctx.Message.ForwardOrigin.MergeMessageOrigin()
+	if c, ok := bot.caches[messageOrigin.MessageId]; ok {
+		defer delete(bot.caches, messageOrigin.MessageId)
 		if len(c.medias) > 0 {
 			var inputMedia []gotgbot.InputMedia
 			for i, media := range c.medias {
