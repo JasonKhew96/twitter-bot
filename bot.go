@@ -144,8 +144,14 @@ func (bot *bot) Close() {
 }
 
 func (bot *bot) initBot() error {
-	updater := ext.NewUpdater(nil)
-	dispatcher := updater.Dispatcher
+	dispatcher := ext.NewDispatcher(&ext.DispatcherOpts{
+		Error: func(b *gotgbot.Bot, ctx *ext.Context, err error) ext.DispatcherAction {
+			log.Println("an error occurred while handling update:", err.Error())
+			return ext.DispatcherActionNoop
+		},
+	})
+
+	updater := ext.NewUpdater(dispatcher, nil)
 
 	dispatcher.AddHandler(handlers.NewMessage(func(msg *gotgbot.Message) bool {
 		return msg.Chat.Id == bot.groupChatID
@@ -353,28 +359,38 @@ func (bot *bot) handlePrivateMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 		switch media := inputMedia.(type) {
 		case gotgbot.InputMediaPhoto:
 			_, err = b.SendPhoto(ctx.EffectiveChat.Id, inputMedia.GetMedia(), &gotgbot.SendPhotoOpts{
-				Caption:          media.Caption,
-				ParseMode:        "MarkdownV2",
-				ReplyToMessageId: ctx.EffectiveMessage.MessageId,
+				Caption:   media.Caption,
+				ParseMode: "MarkdownV2",
+				ReplyParameters: &gotgbot.ReplyParameters{
+					MessageId: ctx.EffectiveMessage.MessageId,
+				},
 			})
 		case gotgbot.InputMediaVideo:
 			_, err = b.SendVideo(ctx.EffectiveChat.Id, inputMedia.GetMedia(), &gotgbot.SendVideoOpts{
-				Caption:          media.Caption,
-				ParseMode:        "MarkdownV2",
-				ReplyToMessageId: ctx.EffectiveMessage.MessageId,
+				Caption:   media.Caption,
+				ParseMode: "MarkdownV2",
+				ReplyParameters: &gotgbot.ReplyParameters{
+					MessageId: ctx.EffectiveMessage.MessageId,
+				},
 			})
 		case gotgbot.InputMediaAnimation:
 			_, err = b.SendAnimation(ctx.EffectiveChat.Id, inputMedia.GetMedia(), &gotgbot.SendAnimationOpts{
-				Caption:          media.Caption,
-				ParseMode:        "MarkdownV2",
-				ReplyToMessageId: ctx.EffectiveMessage.MessageId,
+				Caption:   media.Caption,
+				ParseMode: "MarkdownV2",
+				ReplyParameters: &gotgbot.ReplyParameters{
+					MessageId: ctx.EffectiveMessage.MessageId,
+				},
 			})
 		}
 	} else {
 		_, err = b.SendMessage(ctx.EffectiveChat.Id, caption, &gotgbot.SendMessageOpts{
-			DisableWebPagePreview: true,
-			ParseMode:             "MarkdownV2",
-			ReplyToMessageId:      ctx.EffectiveMessage.MessageId,
+			LinkPreviewOptions: &gotgbot.LinkPreviewOptions{
+				IsDisabled: true,
+			},
+			ParseMode: "MarkdownV2",
+			ReplyParameters: &gotgbot.ReplyParameters{
+				MessageId: ctx.EffectiveMessage.MessageId,
+			},
 		})
 	}
 	if err != nil {
@@ -395,17 +411,23 @@ func (bot *bot) handlePrivateMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 	}
 
 	_, err = ctx.EffectiveMessage.Reply(b, strings.Join(urlList, "\n"), &gotgbot.SendMessageOpts{
-		DisableWebPagePreview: true,
+		LinkPreviewOptions: &gotgbot.LinkPreviewOptions{
+			IsDisabled: true,
+		},
 	})
 	return err
 }
 
 func (bot *bot) handleChatMessages(b *gotgbot.Bot, ctx *ext.Context) error {
-	if ctx.Message.SenderChat != nil && ctx.Message.SenderChat.Id != bot.channelChatID {
+	if !ctx.Message.IsAutomaticForward && ctx.Message.SenderChat.Id != bot.channelChatID {
 		return nil
 	}
-	if c, ok := bot.caches[ctx.Message.ForwardFromMessageId]; ok {
-		defer delete(bot.caches, ctx.Message.ForwardFromMessageId)
+	if ctx.Message.ForwardOrigin.GetType() != "channel" {
+		return nil
+	}
+	forwardOrigin := ctx.Message.ForwardOrigin.(*gotgbot.MessageOriginChannel)
+	if c, ok := bot.caches[forwardOrigin.MessageId]; ok {
+		defer delete(bot.caches, forwardOrigin.MessageId)
 		if len(c.medias) > 0 {
 			var inputMedia []gotgbot.InputMedia
 			for i, media := range c.medias {
@@ -442,7 +464,9 @@ func (bot *bot) handleChatMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 				})
 			}
 			if _, err := b.SendMediaGroup(ctx.Message.Chat.Id, inputMedia, &gotgbot.SendMediaGroupOpts{
-				ReplyToMessageId: ctx.Message.MessageId,
+				ReplyParameters: &gotgbot.ReplyParameters{
+					MessageId: ctx.EffectiveMessage.MessageId,
+				},
 			}); err != nil {
 				log.Println(err)
 				_, err = bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("%+v\n\n%+v\n\n%s", err.Error(), inputMedia, ctx.Message.Entities[len(ctx.Message.Entities)-1].Url), nil)
