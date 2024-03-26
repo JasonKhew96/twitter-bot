@@ -8,13 +8,18 @@ import (
 )
 
 type Config struct {
-	DatabaseUrl          string
-	TwitterCookie        string
-	XCsrfToken           string
-	TelegramBotToken     string
-	ChannelChatID        int64
-	GroupChatID          int64
-	OwnerID              int64
+	DatabaseUrl      string
+	TwitterCookie    string
+	XCsrfToken       string
+	TelegramBotToken string
+
+	ChannelChatID int64
+	GroupChatID   int64
+	OwnerID       int64
+
+	MoeIslandChannelID int64
+	MoeIslandGroupID   int64
+
 	PopularTweetFactor   int
 	PopularRetweetFactor int
 	BotApiUrl            string
@@ -68,6 +73,15 @@ func loadConfig() (*Config, error) {
 		return nil, errors.Wrap(err, "OWNER_ID is not a number")
 	}
 
+	moeIslandChannelID, err := strconv.ParseInt(os.Getenv("MOE_ISLAND_CHANNEL_ID"), 10, 64)
+	if moeIslandChannelID == 0 || err != nil {
+		return nil, errors.Wrap(err, "MOE_ISLAND_CHANNEL_ID is not a number")
+	}
+	moeIslandGroupID, err := strconv.ParseInt(os.Getenv("MOE_ISLAND_GROUP_ID"), 10, 64)
+	if moeIslandGroupID == 0 || err != nil {
+		return nil, errors.Wrap(err, "MOE_ISLAND_GROUP_ID is not a number")
+	}
+
 	popularTweetFactorStr := os.Getenv("POPULAR_TWEET_FACTOR")
 	if popularTweetFactorStr == "" {
 		return nil, errors.New("POPULAR_TWEET_FACTOR is not set")
@@ -95,6 +109,8 @@ func loadConfig() (*Config, error) {
 		ChannelChatID:        channelChatID,
 		GroupChatID:          groupChatID,
 		OwnerID:              ownerID,
+		MoeIslandChannelID:   moeIslandChannelID,
+		MoeIslandGroupID:     moeIslandGroupID,
 		PopularTweetFactor:   popularTweetFactor,
 		PopularRetweetFactor: popularRetweetFactor,
 		BotApiUrl:            botApiUrl,

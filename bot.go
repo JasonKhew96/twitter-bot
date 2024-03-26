@@ -4,10 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"image/jpeg"
 	"log"
 	"math"
+	"math/big"
 	"net/http"
+	"os"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -19,6 +23,7 @@ import (
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers/filters/message"
+	"github.com/corona10/goimagehash"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 	"github.com/volatiletech/null/v8"
@@ -36,18 +41,26 @@ type Job struct {
 	cache       *twiCache
 }
 
+type SimilarJob struct {
+	msg string
+}
+
 type bot struct {
-	db     *sql.DB
-	twit   *twiscraper.Scraper
-	tg     *gotgbot.Bot
-	caches map[int64]*twiCache
-	jobs   chan Job
+	db          *sql.DB
+	twit        *twiscraper.Scraper
+	tg          *gotgbot.Bot
+	caches      map[int64]*twiCache
+	jobs        chan Job
+	similarJobs chan SimilarJob
 
 	errCount int
 
 	channelChatID int64
 	groupChatID   int64
 	ownerID       int64
+
+	moeIslandChannelID int64
+	moeIslandGroupID   int64
 
 	popularTweetFactor   int
 	popularRetweetFactor int
@@ -72,22 +85,33 @@ func New() (*bot, error) {
 	}
 
 	/*
-		CREATE TABLE "unfollowed" (
-			"uid"			BIGINT NOT NULL UNIQUE PRIMARY KEY
+		CREATE TABLE unfollowed (uid BIGINT NOT NULL UNIQUE PRIMARY KEY);
+
+		CREATE TABLE tweets (
+			id BIGINT NOT NULL UNIQUE PRIMARY KEY,
+			likes BIGINT NOT NULL,
+			retweets BIGINT NOT NULL,
+			replies BIGINT NOT NULL,
+			medias TEXT NOT NULL,
+			text TEXT,
+			html TEXT,
+			timestamp TIMESTAMP NOT NULL,
+			url TEXT NOT NULL,
+			uid BIGINT NOT NULL,
+			created_at TIMESTAMP NOT NULL,
+			updated_at TIMESTAMP NOT NULL
 		);
-		CREATE TABLE "tweets" (
-			"id"			BIGINT NOT NULL UNIQUE PRIMARY KEY,
-			"likes"			BIGINT NOT NULL,
-			"retweets"		BIGINT NOT NULL,
-			"replies"		BIGINT NOT NULL,
-			"medias"		TEXT NOT NULL,
-			"text"			TEXT,
-			"html"			TEXT,
-			"timestamp"		TIMESTAMP NOT NULL,
-			"url"			TEXT NOT NULL,
-			"uid"			BIGINT NOT NULL,
-			"created_at"	TIMESTAMP NOT NULL,
-			"updated_at"	TIMESTAMP NOT NULL
+
+		CREATE TABLE images (
+			id SERIAL NOT NULL UNIQUE PRIMARY KEY,
+			hash_a TEXT NOT NULL,
+			hash_b TEXT NOT NULL,
+			hash_c TEXT NOT NULL,
+			hash_d TEXT NOT NULL,
+			chat_id BIGINT NOT NULL,
+			message_id BIGINT NOT NULL,
+			created_at TIMESTAMP NOT NULL,
+			updated_at TIMESTAMP NOT NULL
 		);
 	*/
 
@@ -128,10 +152,13 @@ func New() (*bot, error) {
 		tg:                   b,
 		caches:               make(map[int64]*twiCache),
 		jobs:                 make(chan Job),
+		similarJobs:          make(chan SimilarJob),
 		errCount:             0,
 		channelChatID:        config.ChannelChatID,
 		groupChatID:          config.GroupChatID,
 		ownerID:              config.OwnerID,
+		moeIslandChannelID:   config.MoeIslandChannelID,
+		moeIslandGroupID:     config.MoeIslandGroupID,
 		popularTweetFactor:   config.PopularTweetFactor,
 		popularRetweetFactor: config.PopularRetweetFactor,
 		botApiUrl:            config.BotApiUrl,
@@ -158,6 +185,11 @@ func (bot *bot) initBot() error {
 	}, bot.handleChatMessages))
 	dispatcher.AddHandler(handlers.NewCommand("follow", bot.commandFollow))
 	dispatcher.AddHandler(handlers.NewCommand("unfollow", bot.commandUnfollow))
+
+	dispatcher.AddHandler(handlers.NewMessage(func(msg *gotgbot.Message) bool {
+		return message.Channel(msg) && msg.Chat.Id == bot.moeIslandChannelID && msg.Photo != nil
+	}, bot.handleMoeIslandMessages).SetAllowChannel(true))
+
 	dispatcher.AddHandler(handlers.NewMessage(message.Private, bot.handlePrivateMessages))
 	dispatcher.AddHandler(handlers.NewCallback(func(cq *gotgbot.CallbackQuery) bool {
 		return cq.From.Id == bot.ownerID
@@ -165,7 +197,6 @@ func (bot *bot) initBot() error {
 
 	// Start receiving updates.
 	err := updater.StartPolling(bot.tg, &ext.PollingOpts{
-		DropPendingUpdates:    true,
 		EnableWebhookDeletion: true,
 		GetUpdatesOpts: &gotgbot.GetUpdatesOpts{
 			Timeout: 60,
@@ -224,6 +255,15 @@ func (bot *bot) worker() {
 			bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("%+v\n\n%+v", err.Error(), job.inputMedias), nil)
 		} else if len(job.cache.medias) > 0 {
 			bot.caches[msgs[0].MessageId] = job.cache
+		}
+		time.Sleep(10 * time.Second)
+	}
+}
+
+func (bot *bot) similarWorker() {
+	for job := range bot.similarJobs {
+		if _, err := bot.tg.SendMessage(bot.moeIslandGroupID, job.msg, nil); err != nil {
+			log.Println(err)
 		}
 		time.Sleep(10 * time.Second)
 	}
@@ -324,6 +364,97 @@ func (bot *bot) handleCallbackData(b *gotgbot.Bot, ctx *ext.Context) error {
 	default:
 		break
 	}
+	return nil
+}
+
+type HashImage struct {
+	ChatID    int64
+	MessageID int64
+	Distance  int
+}
+
+func (bot *bot) handleMoeIslandMessages(b *gotgbot.Bot, ctx *ext.Context) error {
+	photo := ctx.EffectiveMessage.Photo[len(ctx.EffectiveMessage.Photo)-1]
+	botFile, err := b.GetFile(photo.FileId, nil)
+	if err != nil {
+		return err
+	}
+	filePath := botFile.FilePath
+	file, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+	img, err := jpeg.Decode(file)
+	if err != nil {
+		return err
+	}
+	newPHash, err := goimagehash.PerceptionHash(img)
+	if err != nil {
+		return err
+	}
+
+	fmtStr := "%016x"
+	hashStr := fmt.Sprintf(fmtStr, newPHash.GetHash())
+	hashA := hashStr[:4]
+	hashB := hashStr[4:8]
+	hashC := hashStr[8:12]
+	hashD := hashStr[12:16]
+
+	newImg := models.Image{
+		HashA:     hashA,
+		HashB:     hashB,
+		HashC:     hashC,
+		HashD:     hashD,
+		ChatID:    ctx.EffectiveChat.Id,
+		MessageID: ctx.EffectiveMessage.MessageId,
+	}
+
+	allImgs, err := models.Images(qm.Where("chat_id = ? AND (hash_a = ? OR hash_b = ? OR hash_c = ? OR hash_d = ?)", ctx.EffectiveChat.Id, hashA, hashB, hashC, hashD)).All(context.Background(), bot.db)
+	if err != nil {
+		return err
+	}
+
+	if err := newImg.Insert(context.Background(), bot.db, boil.Infer()); err != nil {
+		return err
+	}
+
+	var images []HashImage
+
+	for _, img := range allImgs {
+		oldPHashStr := fmt.Sprintf("%s%s%s%s", img.HashA, img.HashB, img.HashC, img.HashD)
+		n := new(big.Int)
+		n.SetString(oldPHashStr, 16)
+		oldPHash := goimagehash.NewImageHash(n.Uint64(), goimagehash.PHash)
+		distance, err := oldPHash.Distance(newPHash)
+		if err != nil {
+			return err
+		}
+		if distance > 5 {
+			continue
+		}
+		images = append(images, HashImage{
+			ChatID:    img.ChatID,
+			MessageID: img.MessageID,
+			Distance:  distance,
+		})
+	}
+
+	if len(images) <= 0 {
+		return nil
+	}
+
+	sort.Slice(images, func(i, j int) bool {
+		return images[i].Distance < images[j].Distance
+	})
+
+	chatId := strings.TrimPrefix(fmt.Sprintf("%d", ctx.EffectiveChat.Id), "-100")
+	fmtMessage := fmt.Sprintf("Similar images:\nhttps://t.me/c/%s/%d\n", chatId, ctx.EffectiveMessage.MessageId)
+	for _, img := range images {
+		imgChatId := strings.TrimPrefix(fmt.Sprintf("%d", img.ChatID), "-100")
+		fmtMessage += fmt.Sprintf("https://t.me/c/%s/%d %d\n", imgChatId, img.MessageID, img.Distance)
+	}
+	bot.similarJobs <- SimilarJob{msg: fmtMessage}
+
 	return nil
 }
 

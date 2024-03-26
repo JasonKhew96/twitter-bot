@@ -21,24 +21,24 @@ var (
 	_ = queries.Equal
 )
 
-func testTweets(t *testing.T) {
+func testImages(t *testing.T) {
 	t.Parallel()
 
-	query := Tweets()
+	query := Images()
 
 	if query.Query == nil {
 		t.Error("expected a query, got nothing")
 	}
 }
 
-func testTweetsDelete(t *testing.T) {
+func testImagesDelete(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Tweet{}
-	if err = randomize.Struct(seed, o, tweetDBTypes, true, tweetColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Tweet struct: %s", err)
+	o := &Image{}
+	if err = randomize.Struct(seed, o, imageDBTypes, true, imageColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Image struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -54,7 +54,7 @@ func testTweetsDelete(t *testing.T) {
 		t.Error("should only have deleted one row, but affected:", rowsAff)
 	}
 
-	count, err := Tweets().Count(ctx, tx)
+	count, err := Images().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -64,14 +64,14 @@ func testTweetsDelete(t *testing.T) {
 	}
 }
 
-func testTweetsQueryDeleteAll(t *testing.T) {
+func testImagesQueryDeleteAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Tweet{}
-	if err = randomize.Struct(seed, o, tweetDBTypes, true, tweetColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Tweet struct: %s", err)
+	o := &Image{}
+	if err = randomize.Struct(seed, o, imageDBTypes, true, imageColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Image struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -81,13 +81,13 @@ func testTweetsQueryDeleteAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	if rowsAff, err := Tweets().DeleteAll(ctx, tx); err != nil {
+	if rowsAff, err := Images().DeleteAll(ctx, tx); err != nil {
 		t.Error(err)
 	} else if rowsAff != 1 {
 		t.Error("should only have deleted one row, but affected:", rowsAff)
 	}
 
-	count, err := Tweets().Count(ctx, tx)
+	count, err := Images().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -97,14 +97,14 @@ func testTweetsQueryDeleteAll(t *testing.T) {
 	}
 }
 
-func testTweetsSliceDeleteAll(t *testing.T) {
+func testImagesSliceDeleteAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Tweet{}
-	if err = randomize.Struct(seed, o, tweetDBTypes, true, tweetColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Tweet struct: %s", err)
+	o := &Image{}
+	if err = randomize.Struct(seed, o, imageDBTypes, true, imageColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Image struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -114,7 +114,7 @@ func testTweetsSliceDeleteAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	slice := TweetSlice{o}
+	slice := ImageSlice{o}
 
 	if rowsAff, err := slice.DeleteAll(ctx, tx); err != nil {
 		t.Error(err)
@@ -122,7 +122,7 @@ func testTweetsSliceDeleteAll(t *testing.T) {
 		t.Error("should only have deleted one row, but affected:", rowsAff)
 	}
 
-	count, err := Tweets().Count(ctx, tx)
+	count, err := Images().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -132,14 +132,14 @@ func testTweetsSliceDeleteAll(t *testing.T) {
 	}
 }
 
-func testTweetsExists(t *testing.T) {
+func testImagesExists(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Tweet{}
-	if err = randomize.Struct(seed, o, tweetDBTypes, true, tweetColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Tweet struct: %s", err)
+	o := &Image{}
+	if err = randomize.Struct(seed, o, imageDBTypes, true, imageColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Image struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -149,23 +149,23 @@ func testTweetsExists(t *testing.T) {
 		t.Error(err)
 	}
 
-	e, err := TweetExists(ctx, tx, o.ID)
+	e, err := ImageExists(ctx, tx, o.ID)
 	if err != nil {
-		t.Errorf("Unable to check if Tweet exists: %s", err)
+		t.Errorf("Unable to check if Image exists: %s", err)
 	}
 	if !e {
-		t.Errorf("Expected TweetExists to return true, but got false.")
+		t.Errorf("Expected ImageExists to return true, but got false.")
 	}
 }
 
-func testTweetsFind(t *testing.T) {
+func testImagesFind(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Tweet{}
-	if err = randomize.Struct(seed, o, tweetDBTypes, true, tweetColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Tweet struct: %s", err)
+	o := &Image{}
+	if err = randomize.Struct(seed, o, imageDBTypes, true, imageColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Image struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -175,24 +175,24 @@ func testTweetsFind(t *testing.T) {
 		t.Error(err)
 	}
 
-	tweetFound, err := FindTweet(ctx, tx, o.ID)
+	imageFound, err := FindImage(ctx, tx, o.ID)
 	if err != nil {
 		t.Error(err)
 	}
 
-	if tweetFound == nil {
+	if imageFound == nil {
 		t.Error("want a record, got nil")
 	}
 }
 
-func testTweetsBind(t *testing.T) {
+func testImagesBind(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Tweet{}
-	if err = randomize.Struct(seed, o, tweetDBTypes, true, tweetColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Tweet struct: %s", err)
+	o := &Image{}
+	if err = randomize.Struct(seed, o, imageDBTypes, true, imageColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Image struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -202,19 +202,19 @@ func testTweetsBind(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err = Tweets().Bind(ctx, tx, o); err != nil {
+	if err = Images().Bind(ctx, tx, o); err != nil {
 		t.Error(err)
 	}
 }
 
-func testTweetsOne(t *testing.T) {
+func testImagesOne(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Tweet{}
-	if err = randomize.Struct(seed, o, tweetDBTypes, true, tweetColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Tweet struct: %s", err)
+	o := &Image{}
+	if err = randomize.Struct(seed, o, imageDBTypes, true, imageColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Image struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -224,38 +224,38 @@ func testTweetsOne(t *testing.T) {
 		t.Error(err)
 	}
 
-	if x, err := Tweets().One(ctx, tx); err != nil {
+	if x, err := Images().One(ctx, tx); err != nil {
 		t.Error(err)
 	} else if x == nil {
 		t.Error("expected to get a non nil record")
 	}
 }
 
-func testTweetsAll(t *testing.T) {
+func testImagesAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	tweetOne := &Tweet{}
-	tweetTwo := &Tweet{}
-	if err = randomize.Struct(seed, tweetOne, tweetDBTypes, false, tweetColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Tweet struct: %s", err)
+	imageOne := &Image{}
+	imageTwo := &Image{}
+	if err = randomize.Struct(seed, imageOne, imageDBTypes, false, imageColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Image struct: %s", err)
 	}
-	if err = randomize.Struct(seed, tweetTwo, tweetDBTypes, false, tweetColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Tweet struct: %s", err)
+	if err = randomize.Struct(seed, imageTwo, imageDBTypes, false, imageColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Image struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
-	if err = tweetOne.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = imageOne.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
-	if err = tweetTwo.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = imageTwo.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
 
-	slice, err := Tweets().All(ctx, tx)
+	slice, err := Images().All(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -265,31 +265,31 @@ func testTweetsAll(t *testing.T) {
 	}
 }
 
-func testTweetsCount(t *testing.T) {
+func testImagesCount(t *testing.T) {
 	t.Parallel()
 
 	var err error
 	seed := randomize.NewSeed()
-	tweetOne := &Tweet{}
-	tweetTwo := &Tweet{}
-	if err = randomize.Struct(seed, tweetOne, tweetDBTypes, false, tweetColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Tweet struct: %s", err)
+	imageOne := &Image{}
+	imageTwo := &Image{}
+	if err = randomize.Struct(seed, imageOne, imageDBTypes, false, imageColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Image struct: %s", err)
 	}
-	if err = randomize.Struct(seed, tweetTwo, tweetDBTypes, false, tweetColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Tweet struct: %s", err)
+	if err = randomize.Struct(seed, imageTwo, imageDBTypes, false, imageColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Image struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
-	if err = tweetOne.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = imageOne.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
-	if err = tweetTwo.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = imageTwo.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
 
-	count, err := Tweets().Count(ctx, tx)
+	count, err := Images().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -299,155 +299,155 @@ func testTweetsCount(t *testing.T) {
 	}
 }
 
-func tweetBeforeInsertHook(ctx context.Context, e boil.ContextExecutor, o *Tweet) error {
-	*o = Tweet{}
+func imageBeforeInsertHook(ctx context.Context, e boil.ContextExecutor, o *Image) error {
+	*o = Image{}
 	return nil
 }
 
-func tweetAfterInsertHook(ctx context.Context, e boil.ContextExecutor, o *Tweet) error {
-	*o = Tweet{}
+func imageAfterInsertHook(ctx context.Context, e boil.ContextExecutor, o *Image) error {
+	*o = Image{}
 	return nil
 }
 
-func tweetAfterSelectHook(ctx context.Context, e boil.ContextExecutor, o *Tweet) error {
-	*o = Tweet{}
+func imageAfterSelectHook(ctx context.Context, e boil.ContextExecutor, o *Image) error {
+	*o = Image{}
 	return nil
 }
 
-func tweetBeforeUpdateHook(ctx context.Context, e boil.ContextExecutor, o *Tweet) error {
-	*o = Tweet{}
+func imageBeforeUpdateHook(ctx context.Context, e boil.ContextExecutor, o *Image) error {
+	*o = Image{}
 	return nil
 }
 
-func tweetAfterUpdateHook(ctx context.Context, e boil.ContextExecutor, o *Tweet) error {
-	*o = Tweet{}
+func imageAfterUpdateHook(ctx context.Context, e boil.ContextExecutor, o *Image) error {
+	*o = Image{}
 	return nil
 }
 
-func tweetBeforeDeleteHook(ctx context.Context, e boil.ContextExecutor, o *Tweet) error {
-	*o = Tweet{}
+func imageBeforeDeleteHook(ctx context.Context, e boil.ContextExecutor, o *Image) error {
+	*o = Image{}
 	return nil
 }
 
-func tweetAfterDeleteHook(ctx context.Context, e boil.ContextExecutor, o *Tweet) error {
-	*o = Tweet{}
+func imageAfterDeleteHook(ctx context.Context, e boil.ContextExecutor, o *Image) error {
+	*o = Image{}
 	return nil
 }
 
-func tweetBeforeUpsertHook(ctx context.Context, e boil.ContextExecutor, o *Tweet) error {
-	*o = Tweet{}
+func imageBeforeUpsertHook(ctx context.Context, e boil.ContextExecutor, o *Image) error {
+	*o = Image{}
 	return nil
 }
 
-func tweetAfterUpsertHook(ctx context.Context, e boil.ContextExecutor, o *Tweet) error {
-	*o = Tweet{}
+func imageAfterUpsertHook(ctx context.Context, e boil.ContextExecutor, o *Image) error {
+	*o = Image{}
 	return nil
 }
 
-func testTweetsHooks(t *testing.T) {
+func testImagesHooks(t *testing.T) {
 	t.Parallel()
 
 	var err error
 
 	ctx := context.Background()
-	empty := &Tweet{}
-	o := &Tweet{}
+	empty := &Image{}
+	o := &Image{}
 
 	seed := randomize.NewSeed()
-	if err = randomize.Struct(seed, o, tweetDBTypes, false); err != nil {
-		t.Errorf("Unable to randomize Tweet object: %s", err)
+	if err = randomize.Struct(seed, o, imageDBTypes, false); err != nil {
+		t.Errorf("Unable to randomize Image object: %s", err)
 	}
 
-	AddTweetHook(boil.BeforeInsertHook, tweetBeforeInsertHook)
+	AddImageHook(boil.BeforeInsertHook, imageBeforeInsertHook)
 	if err = o.doBeforeInsertHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doBeforeInsertHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected BeforeInsertHook function to empty object, but got: %#v", o)
 	}
-	tweetBeforeInsertHooks = []TweetHook{}
+	imageBeforeInsertHooks = []ImageHook{}
 
-	AddTweetHook(boil.AfterInsertHook, tweetAfterInsertHook)
+	AddImageHook(boil.AfterInsertHook, imageAfterInsertHook)
 	if err = o.doAfterInsertHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterInsertHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterInsertHook function to empty object, but got: %#v", o)
 	}
-	tweetAfterInsertHooks = []TweetHook{}
+	imageAfterInsertHooks = []ImageHook{}
 
-	AddTweetHook(boil.AfterSelectHook, tweetAfterSelectHook)
+	AddImageHook(boil.AfterSelectHook, imageAfterSelectHook)
 	if err = o.doAfterSelectHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterSelectHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterSelectHook function to empty object, but got: %#v", o)
 	}
-	tweetAfterSelectHooks = []TweetHook{}
+	imageAfterSelectHooks = []ImageHook{}
 
-	AddTweetHook(boil.BeforeUpdateHook, tweetBeforeUpdateHook)
+	AddImageHook(boil.BeforeUpdateHook, imageBeforeUpdateHook)
 	if err = o.doBeforeUpdateHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doBeforeUpdateHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected BeforeUpdateHook function to empty object, but got: %#v", o)
 	}
-	tweetBeforeUpdateHooks = []TweetHook{}
+	imageBeforeUpdateHooks = []ImageHook{}
 
-	AddTweetHook(boil.AfterUpdateHook, tweetAfterUpdateHook)
+	AddImageHook(boil.AfterUpdateHook, imageAfterUpdateHook)
 	if err = o.doAfterUpdateHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterUpdateHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterUpdateHook function to empty object, but got: %#v", o)
 	}
-	tweetAfterUpdateHooks = []TweetHook{}
+	imageAfterUpdateHooks = []ImageHook{}
 
-	AddTweetHook(boil.BeforeDeleteHook, tweetBeforeDeleteHook)
+	AddImageHook(boil.BeforeDeleteHook, imageBeforeDeleteHook)
 	if err = o.doBeforeDeleteHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doBeforeDeleteHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected BeforeDeleteHook function to empty object, but got: %#v", o)
 	}
-	tweetBeforeDeleteHooks = []TweetHook{}
+	imageBeforeDeleteHooks = []ImageHook{}
 
-	AddTweetHook(boil.AfterDeleteHook, tweetAfterDeleteHook)
+	AddImageHook(boil.AfterDeleteHook, imageAfterDeleteHook)
 	if err = o.doAfterDeleteHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterDeleteHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterDeleteHook function to empty object, but got: %#v", o)
 	}
-	tweetAfterDeleteHooks = []TweetHook{}
+	imageAfterDeleteHooks = []ImageHook{}
 
-	AddTweetHook(boil.BeforeUpsertHook, tweetBeforeUpsertHook)
+	AddImageHook(boil.BeforeUpsertHook, imageBeforeUpsertHook)
 	if err = o.doBeforeUpsertHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doBeforeUpsertHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected BeforeUpsertHook function to empty object, but got: %#v", o)
 	}
-	tweetBeforeUpsertHooks = []TweetHook{}
+	imageBeforeUpsertHooks = []ImageHook{}
 
-	AddTweetHook(boil.AfterUpsertHook, tweetAfterUpsertHook)
+	AddImageHook(boil.AfterUpsertHook, imageAfterUpsertHook)
 	if err = o.doAfterUpsertHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterUpsertHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterUpsertHook function to empty object, but got: %#v", o)
 	}
-	tweetAfterUpsertHooks = []TweetHook{}
+	imageAfterUpsertHooks = []ImageHook{}
 }
 
-func testTweetsInsert(t *testing.T) {
+func testImagesInsert(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Tweet{}
-	if err = randomize.Struct(seed, o, tweetDBTypes, true, tweetColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Tweet struct: %s", err)
+	o := &Image{}
+	if err = randomize.Struct(seed, o, imageDBTypes, true, imageColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Image struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -457,7 +457,7 @@ func testTweetsInsert(t *testing.T) {
 		t.Error(err)
 	}
 
-	count, err := Tweets().Count(ctx, tx)
+	count, err := Images().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -467,24 +467,24 @@ func testTweetsInsert(t *testing.T) {
 	}
 }
 
-func testTweetsInsertWhitelist(t *testing.T) {
+func testImagesInsertWhitelist(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Tweet{}
-	if err = randomize.Struct(seed, o, tweetDBTypes, true); err != nil {
-		t.Errorf("Unable to randomize Tweet struct: %s", err)
+	o := &Image{}
+	if err = randomize.Struct(seed, o, imageDBTypes, true); err != nil {
+		t.Errorf("Unable to randomize Image struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
-	if err = o.Insert(ctx, tx, boil.Whitelist(tweetColumnsWithoutDefault...)); err != nil {
+	if err = o.Insert(ctx, tx, boil.Whitelist(imageColumnsWithoutDefault...)); err != nil {
 		t.Error(err)
 	}
 
-	count, err := Tweets().Count(ctx, tx)
+	count, err := Images().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -494,14 +494,14 @@ func testTweetsInsertWhitelist(t *testing.T) {
 	}
 }
 
-func testTweetsReload(t *testing.T) {
+func testImagesReload(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Tweet{}
-	if err = randomize.Struct(seed, o, tweetDBTypes, true, tweetColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Tweet struct: %s", err)
+	o := &Image{}
+	if err = randomize.Struct(seed, o, imageDBTypes, true, imageColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Image struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -516,14 +516,14 @@ func testTweetsReload(t *testing.T) {
 	}
 }
 
-func testTweetsReloadAll(t *testing.T) {
+func testImagesReloadAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Tweet{}
-	if err = randomize.Struct(seed, o, tweetDBTypes, true, tweetColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Tweet struct: %s", err)
+	o := &Image{}
+	if err = randomize.Struct(seed, o, imageDBTypes, true, imageColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Image struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -533,21 +533,21 @@ func testTweetsReloadAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	slice := TweetSlice{o}
+	slice := ImageSlice{o}
 
 	if err = slice.ReloadAll(ctx, tx); err != nil {
 		t.Error(err)
 	}
 }
 
-func testTweetsSelect(t *testing.T) {
+func testImagesSelect(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Tweet{}
-	if err = randomize.Struct(seed, o, tweetDBTypes, true, tweetColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Tweet struct: %s", err)
+	o := &Image{}
+	if err = randomize.Struct(seed, o, imageDBTypes, true, imageColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Image struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -557,7 +557,7 @@ func testTweetsSelect(t *testing.T) {
 		t.Error(err)
 	}
 
-	slice, err := Tweets().All(ctx, tx)
+	slice, err := Images().All(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -568,25 +568,25 @@ func testTweetsSelect(t *testing.T) {
 }
 
 var (
-	tweetDBTypes = map[string]string{`ID`: `bigint`, `Likes`: `bigint`, `Retweets`: `bigint`, `Replies`: `bigint`, `Medias`: `text`, `Text`: `text`, `HTML`: `text`, `Timestamp`: `timestamp without time zone`, `URL`: `text`, `UID`: `bigint`, `CreatedAt`: `timestamp without time zone`, `UpdatedAt`: `timestamp without time zone`}
+	imageDBTypes = map[string]string{`ID`: `integer`, `HashA`: `text`, `HashB`: `text`, `HashC`: `text`, `HashD`: `text`, `ChatID`: `bigint`, `MessageID`: `bigint`, `CreatedAt`: `timestamp without time zone`, `UpdatedAt`: `timestamp without time zone`}
 	_            = bytes.MinRead
 )
 
-func testTweetsUpdate(t *testing.T) {
+func testImagesUpdate(t *testing.T) {
 	t.Parallel()
 
-	if 0 == len(tweetPrimaryKeyColumns) {
+	if 0 == len(imagePrimaryKeyColumns) {
 		t.Skip("Skipping table with no primary key columns")
 	}
-	if len(tweetAllColumns) == len(tweetPrimaryKeyColumns) {
+	if len(imageAllColumns) == len(imagePrimaryKeyColumns) {
 		t.Skip("Skipping table with only primary key columns")
 	}
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Tweet{}
-	if err = randomize.Struct(seed, o, tweetDBTypes, true, tweetColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Tweet struct: %s", err)
+	o := &Image{}
+	if err = randomize.Struct(seed, o, imageDBTypes, true, imageColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Image struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -596,7 +596,7 @@ func testTweetsUpdate(t *testing.T) {
 		t.Error(err)
 	}
 
-	count, err := Tweets().Count(ctx, tx)
+	count, err := Images().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -605,8 +605,8 @@ func testTweetsUpdate(t *testing.T) {
 		t.Error("want one record, got:", count)
 	}
 
-	if err = randomize.Struct(seed, o, tweetDBTypes, true, tweetPrimaryKeyColumns...); err != nil {
-		t.Errorf("Unable to randomize Tweet struct: %s", err)
+	if err = randomize.Struct(seed, o, imageDBTypes, true, imagePrimaryKeyColumns...); err != nil {
+		t.Errorf("Unable to randomize Image struct: %s", err)
 	}
 
 	if rowsAff, err := o.Update(ctx, tx, boil.Infer()); err != nil {
@@ -616,18 +616,18 @@ func testTweetsUpdate(t *testing.T) {
 	}
 }
 
-func testTweetsSliceUpdateAll(t *testing.T) {
+func testImagesSliceUpdateAll(t *testing.T) {
 	t.Parallel()
 
-	if len(tweetAllColumns) == len(tweetPrimaryKeyColumns) {
+	if len(imageAllColumns) == len(imagePrimaryKeyColumns) {
 		t.Skip("Skipping table with only primary key columns")
 	}
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Tweet{}
-	if err = randomize.Struct(seed, o, tweetDBTypes, true, tweetColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Tweet struct: %s", err)
+	o := &Image{}
+	if err = randomize.Struct(seed, o, imageDBTypes, true, imageColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Image struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -637,7 +637,7 @@ func testTweetsSliceUpdateAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	count, err := Tweets().Count(ctx, tx)
+	count, err := Images().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -646,18 +646,18 @@ func testTweetsSliceUpdateAll(t *testing.T) {
 		t.Error("want one record, got:", count)
 	}
 
-	if err = randomize.Struct(seed, o, tweetDBTypes, true, tweetPrimaryKeyColumns...); err != nil {
-		t.Errorf("Unable to randomize Tweet struct: %s", err)
+	if err = randomize.Struct(seed, o, imageDBTypes, true, imagePrimaryKeyColumns...); err != nil {
+		t.Errorf("Unable to randomize Image struct: %s", err)
 	}
 
 	// Remove Primary keys and unique columns from what we plan to update
 	var fields []string
-	if strmangle.StringSliceMatch(tweetAllColumns, tweetPrimaryKeyColumns) {
-		fields = tweetAllColumns
+	if strmangle.StringSliceMatch(imageAllColumns, imagePrimaryKeyColumns) {
+		fields = imageAllColumns
 	} else {
 		fields = strmangle.SetComplement(
-			tweetAllColumns,
-			tweetPrimaryKeyColumns,
+			imageAllColumns,
+			imagePrimaryKeyColumns,
 		)
 	}
 
@@ -675,7 +675,7 @@ func testTweetsSliceUpdateAll(t *testing.T) {
 		}
 	}
 
-	slice := TweetSlice{o}
+	slice := ImageSlice{o}
 	if rowsAff, err := slice.UpdateAll(ctx, tx, updateMap); err != nil {
 		t.Error(err)
 	} else if rowsAff != 1 {
@@ -683,29 +683,29 @@ func testTweetsSliceUpdateAll(t *testing.T) {
 	}
 }
 
-func testTweetsUpsert(t *testing.T) {
+func testImagesUpsert(t *testing.T) {
 	t.Parallel()
 
-	if len(tweetAllColumns) == len(tweetPrimaryKeyColumns) {
+	if len(imageAllColumns) == len(imagePrimaryKeyColumns) {
 		t.Skip("Skipping table with only primary key columns")
 	}
 
 	seed := randomize.NewSeed()
 	var err error
 	// Attempt the INSERT side of an UPSERT
-	o := Tweet{}
-	if err = randomize.Struct(seed, &o, tweetDBTypes, true); err != nil {
-		t.Errorf("Unable to randomize Tweet struct: %s", err)
+	o := Image{}
+	if err = randomize.Struct(seed, &o, imageDBTypes, true); err != nil {
+		t.Errorf("Unable to randomize Image struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
 	if err = o.Upsert(ctx, tx, false, nil, boil.Infer(), boil.Infer()); err != nil {
-		t.Errorf("Unable to upsert Tweet: %s", err)
+		t.Errorf("Unable to upsert Image: %s", err)
 	}
 
-	count, err := Tweets().Count(ctx, tx)
+	count, err := Images().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -714,15 +714,15 @@ func testTweetsUpsert(t *testing.T) {
 	}
 
 	// Attempt the UPDATE side of an UPSERT
-	if err = randomize.Struct(seed, &o, tweetDBTypes, false, tweetPrimaryKeyColumns...); err != nil {
-		t.Errorf("Unable to randomize Tweet struct: %s", err)
+	if err = randomize.Struct(seed, &o, imageDBTypes, false, imagePrimaryKeyColumns...); err != nil {
+		t.Errorf("Unable to randomize Image struct: %s", err)
 	}
 
 	if err = o.Upsert(ctx, tx, true, nil, boil.Infer(), boil.Infer()); err != nil {
-		t.Errorf("Unable to upsert Tweet: %s", err)
+		t.Errorf("Unable to upsert Image: %s", err)
 	}
 
-	count, err = Tweets().Count(ctx, tx)
+	count, err = Images().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}

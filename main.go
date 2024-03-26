@@ -16,6 +16,7 @@ func main() {
 	defer bot.Close()
 
 	go bot.worker()
+	go bot.similarWorker()
 
 	go bot.loop()
 
