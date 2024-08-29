@@ -823,7 +823,7 @@ func isMedia(tweet entity.ParsedTweet) bool {
 func (bot *bot) isPopularRetweet(t time.Time, likes int) bool {
 	sinceHours := int(math.Floor(time.Since(t).Hours()))
 
-	for h := 1; h <= 24*3; h++ {
+	for h := 1; h <= 24*7; h++ {
 		if sinceHours <= h && likes >= h*bot.popularRetweetFactor {
 			return true
 		}
@@ -835,7 +835,7 @@ func (bot *bot) isPopularRetweet(t time.Time, likes int) bool {
 func (bot *bot) isPopularTweet(t time.Time, likes int) bool {
 	sinceHours := int(math.Floor(time.Since(t).Hours()))
 
-	for h := 1; h <= 24*3; h++ {
+	for h := 1; h <= 24*7; h++ {
 		if sinceHours <= h && likes >= h*bot.popularTweetFactor {
 			return true
 		}
