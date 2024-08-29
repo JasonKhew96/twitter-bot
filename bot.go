@@ -1111,7 +1111,7 @@ func (bot *bot) newLoop() (int, error) {
 		return -1, fmt.Errorf("TOO MUCH ERROR")
 	}
 	time.Sleep(5 * time.Second)
-	for tweet := range bot.twit.GetHomeLatestTimeline(context.Background(), 10*20) {
+	for tweet := range bot.twit.GetHomeLatestTimeline(context.Background(), 5*20) {
 		if tweet.Error != nil {
 			bot.errCount++
 			log.Println("GetHomeLatestTimeline error", tweet.Error)
