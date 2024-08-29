@@ -530,22 +530,52 @@ func (bot *bot) handlePrivateMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 		return err
 	}
 
-	urlList := []string{}
-	// urlList = append(urlList, tweet.Photos...)
-	for _, media := range tweet.Entities.Media {
-		switch v := media.(type) {
-		case entity.ParsedMediaPhoto:
-			urlList = append(urlList, clearUrlQueries(v.Url))
-		case entity.ParsedMediaVideo:
-			urlList = append(urlList, clearUrlQueries(v.Url))
+	if len(tweet.Entities.Media) > 0 {
+		var inputMedia []gotgbot.InputMedia
+		for i, media := range tweet.Entities.Media {
+			var newUrl string
+			var fn string
+			switch v := media.(type) {
+			case entity.ParsedMediaPhoto:
+				newUrl = clearUrlQueries(v.Url)
+				splits := strings.Split(newUrl, ".")
+				ext := splits[len(splits)-1]
+				fn = fmt.Sprintf("%s_%02d.%s", tweet.TweetId, i+1, ext)
+				if ext == "jpg" || ext == "jpeg" || ext == "png" {
+					newUrl = strings.TrimSuffix(newUrl, "."+ext) + "?format=" + ext + "&name=orig"
+				}
+			case entity.ParsedMediaVideo:
+				newUrl = clearUrlQueries(v.Url)
+				splits := strings.Split(newUrl, ".")
+				ext := splits[len(splits)-1]
+				fn = fmt.Sprintf("%s_%02d.%s", tweet.TweetId, i+1, ext)
+			}
+
+			var media gotgbot.InputFileOrString
+			buf, err := downloadToBuffer(newUrl, fn)
+			if err != nil {
+				log.Println(err)
+				media = gotgbot.InputFileByURL(newUrl)
+			} else {
+				media = buf
+			}
+
+			inputMedia = append(inputMedia, gotgbot.InputMediaDocument{
+				Caption: newUrl,
+				Media:   media,
+			})
+		}
+		if _, err := b.SendMediaGroup(ctx.Message.Chat.Id, inputMedia, &gotgbot.SendMediaGroupOpts{
+			ReplyParameters: &gotgbot.ReplyParameters{
+				MessageId: ctx.EffectiveMessage.MessageId,
+			},
+		}); err != nil {
+			log.Println(err)
+			_, err = bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("%+v\n\n%+v\n\n%s", err.Error(), inputMedia, ctx.Message.Entities[len(ctx.Message.Entities)-1].Url), nil)
+			return err
 		}
 	}
 
-	_, err = ctx.EffectiveMessage.Reply(b, strings.Join(urlList, "\n"), &gotgbot.SendMessageOpts{
-		LinkPreviewOptions: &gotgbot.LinkPreviewOptions{
-			IsDisabled: true,
-		},
-	})
 	return err
 }
 
