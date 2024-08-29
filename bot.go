@@ -316,7 +316,7 @@ func (bot *bot) handleCallbackData(b *gotgbot.Bot, ctx *ext.Context) error {
 			return err
 		}
 		_, err = ctx.CallbackQuery.Answer(b, &gotgbot.AnswerCallbackQueryOpts{
-			Text:      fmt.Sprintf("Followed https://twitter.com/%s", username),
+			Text:      fmt.Sprintf("Followed https://x.com/%s", username),
 			ShowAlert: true,
 			CacheTime: 60,
 		})
@@ -356,7 +356,7 @@ func (bot *bot) handleCallbackData(b *gotgbot.Bot, ctx *ext.Context) error {
 		}
 
 		_, err = ctx.CallbackQuery.Answer(b, &gotgbot.AnswerCallbackQueryOpts{
-			Text:      fmt.Sprintf("Unfollowed https://twitter.com/%s", username),
+			Text:      fmt.Sprintf("Unfollowed https://x.com/%s", username),
 			ShowAlert: true,
 			CacheTime: 60,
 		})
@@ -652,7 +652,7 @@ func (bot *bot) commandFollow(b *gotgbot.Bot, ctx *ext.Context) error {
 		return err
 	}
 
-	_, err = ctx.EffectiveMessage.Reply(b, fmt.Sprintf("Following https://twitter.com/%s", twitterUrl.Username), &gotgbot.SendMessageOpts{
+	_, err = ctx.EffectiveMessage.Reply(b, fmt.Sprintf("Following https://x.com/%s", twitterUrl.Username), &gotgbot.SendMessageOpts{
 		ReplyMarkup: gotgbot.InlineKeyboardMarkup{
 			InlineKeyboard: [][]gotgbot.InlineKeyboardButton{
 				{
@@ -721,7 +721,7 @@ func (bot *bot) commandUnfollow(b *gotgbot.Bot, ctx *ext.Context) error {
 		return err
 	}
 
-	_, err = ctx.EffectiveMessage.Reply(b, fmt.Sprintf("Unfollowed https://twitter.com/%s", twitterUrl.Username), &gotgbot.SendMessageOpts{
+	_, err = ctx.EffectiveMessage.Reply(b, fmt.Sprintf("Unfollowed https://x.com/%s", twitterUrl.Username), &gotgbot.SendMessageOpts{
 		ReplyMarkup: gotgbot.InlineKeyboardMarkup{
 			InlineKeyboard: [][]gotgbot.InlineKeyboardButton{
 				{
@@ -944,7 +944,7 @@ OutsideLoop:
 
 		if !tweet.ParsedUser.IsFollowing {
 			log.Println("Suggest", tweet.FavouriteCount, tweet.Views, tweet.Url)
-			if _, err := bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("Followed https://twitter.com/%s", tweet.ParsedUser.ScreenName), &gotgbot.SendMessageOpts{
+			if _, err := bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("Followed https://x.com/%s", tweet.ParsedUser.ScreenName), &gotgbot.SendMessageOpts{
 				ReplyMarkup: gotgbot.InlineKeyboardMarkup{
 					InlineKeyboard: [][]gotgbot.InlineKeyboardButton{
 						{
