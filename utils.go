@@ -138,11 +138,11 @@ func tweet2InputMedias(tweet *entity.ParsedTweet, caption string) []gotgbot.Inpu
 				if ext == "jpg" || ext == "jpeg" || ext == "png" {
 					newUrl = strings.TrimSuffix(newUrl, "."+ext) + "?format=" + ext + "&name=large"
 				}
-				var media gotgbot.InputFile
+				var media gotgbot.InputFileOrString
 				buf, err := downloadToBuffer(newUrl, fn)
 				if err != nil {
 					log.Println(err)
-					media = newUrl
+					media = gotgbot.InputFileByURL(newUrl)
 				} else {
 					media = buf
 				}
@@ -156,11 +156,11 @@ func tweet2InputMedias(tweet *entity.ParsedTweet, caption string) []gotgbot.Inpu
 				splits := strings.Split(newUrl, ".")
 				ext := splits[len(splits)-1]
 				fn = fmt.Sprintf("%s_%02d.%s", tweet.TweetId, i+1, ext)
-				var media gotgbot.InputFile
+				var media gotgbot.InputFileOrString
 				buf, err := downloadToBuffer(newUrl, fn)
 				if err != nil {
 					log.Println(err)
-					media = newUrl
+					media = gotgbot.InputFileByURL(newUrl)
 				} else {
 					media = buf
 				}
@@ -198,7 +198,7 @@ func (e *FileTooLargeError) Error() string {
 	return "file too large"
 }
 
-func downloadToBuffer(url, fn string) (*gotgbot.NamedFile, error) {
+func downloadToBuffer(url, fn string) (gotgbot.InputFile, error) {
 	defaultClient := &http.Client{
 		Timeout: 15 * time.Second,
 	}
@@ -221,8 +221,5 @@ func downloadToBuffer(url, fn string) (*gotgbot.NamedFile, error) {
 		return nil, errors.Wrap(err, "failed to read file")
 	}
 
-	return &gotgbot.NamedFile{
-		File:     buf,
-		FileName: fn,
-	}, nil
+	return gotgbot.InputFileByReader(fn, buf), nil
 }

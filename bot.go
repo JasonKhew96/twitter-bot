@@ -577,11 +577,11 @@ func (bot *bot) handleChatMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 					fn = fmt.Sprintf("%s_%02d.%s", c.tweetId, i+1, ext)
 				}
 
-				var media gotgbot.InputFile
+				var media gotgbot.InputFileOrString
 				buf, err := downloadToBuffer(newUrl, fn)
 				if err != nil {
 					log.Println(err)
-					media = newUrl
+					media = gotgbot.InputFileByURL(newUrl)
 				} else {
 					media = buf
 				}
