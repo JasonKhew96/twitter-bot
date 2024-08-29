@@ -712,7 +712,7 @@ func (bot *bot) commandUnfollow(b *gotgbot.Bot, ctx *ext.Context) error {
 	t := models.Unfollowed{
 		UID: uid,
 	}
-	if err := t.Insert(context.Background(), bot.db, boil.Infer()); err != nil {
+	if err := t.Upsert(context.Background(), bot.db, false, []string{"uid"}, boil.Infer(), boil.Infer()); err != nil {
 		ctx.EffectiveMessage.Reply(b, fmt.Sprintf("Error %s", err.Error()), nil)
 	}
 
