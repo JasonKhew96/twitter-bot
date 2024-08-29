@@ -5,7 +5,7 @@ go 1.23
 toolchain go1.23.0
 
 require (
-	github.com/JasonKhew96/twiscraper v0.0.0-20240518193155-c7cc5139be89
+	github.com/JasonKhew96/twiscraper v0.0.0-20240829143620-b7323c646994
 	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.29
 	github.com/corona10/goimagehash v1.1.0
 	github.com/friendsofgo/errors v0.9.2
