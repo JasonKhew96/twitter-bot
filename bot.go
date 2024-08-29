@@ -876,8 +876,8 @@ func isRepost(tweet *entity.ParsedTweet) bool {
 }
 
 // guess
-func isIllustrator(text string) bool {
-	keyword := []string{"pixiv", "skeb", "potofu", "fanbox", "patreon", "rkgk"}
+func isIllustratorOrAnimator(text string) bool {
+	keyword := []string{"illustrator", "pixiv", "skeb", "potofu", "fanbox", "patreon", "rkgk", "アニメーション", "animator", "アニメーター", "原画", "二原", "作監"}
 	textLower := strings.ToLower(text)
 	for _, k := range keyword {
 		if strings.Contains(textLower, k) {
@@ -938,7 +938,7 @@ OutsideLoop:
 		if count > 0 {
 			return false, nil
 		}
-		if !isIllustrator(tweet.ParsedUser.Description) && !isIllustrator(tweet.ParsedUser.Url) {
+		if !isIllustratorOrAnimator(tweet.ParsedUser.Description) && !isIllustratorOrAnimator(tweet.ParsedUser.Url) {
 			return false, nil
 		}
 
