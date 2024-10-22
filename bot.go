@@ -32,8 +32,9 @@ import (
 )
 
 type twiCache struct {
-	tweetId string
-	medias  []entity.ParsedMedia
+	username string
+	tweetId  string
+	medias   []entity.ParsedMedia
 }
 
 type Job struct {
@@ -630,6 +631,29 @@ func (bot *bot) handleChatMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 				_, err = bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("%+v\n\n%+v\n\n%s", err.Error(), inputMedia, ctx.Message.Entities[len(ctx.Message.Entities)-1].Url), nil)
 				return err
 			}
+			if _, err := bot.tg.SendMessage(ctx.Message.Chat.Id, fmt.Sprintf("https://x.com/%s", c.username), &gotgbot.SendMessageOpts{
+				ReplyParameters: &gotgbot.ReplyParameters{
+					MessageId: ctx.EffectiveMessage.MessageId,
+				},
+				ReplyMarkup: gotgbot.InlineKeyboardMarkup{
+					InlineKeyboard: [][]gotgbot.InlineKeyboardButton{
+						{
+							{
+								Text:         "Follow",
+								CallbackData: "follow." + c.username,
+							},
+							{
+								Text:         "Unfollow",
+								CallbackData: "unfollow." + c.username,
+							},
+						},
+					},
+				},
+			}); err != nil {
+				log.Println(err)
+				_, err = bot.tg.SendMessage(bot.ownerID, fmt.Sprintf("%+v\n\n%+v\n\n%s", err.Error(), inputMedia, ctx.Message.Entities[len(ctx.Message.Entities)-1].Url), nil)
+				return err
+			}
 		}
 	}
 	return nil
@@ -1014,8 +1038,9 @@ OutsideLoop:
 	bot.jobs <- Job{
 		inputMedias: inputMedias,
 		cache: &twiCache{
-			tweetId: tweet.TweetId,
-			medias:  tweet.Entities.Media,
+			username: tweet.ParsedUser.ScreenName,
+			tweetId:  tweet.TweetId,
+			medias:   tweet.Entities.Media,
 		},
 	}
 
