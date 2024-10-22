@@ -1075,8 +1075,9 @@ func (bot *bot) processTweet(tweet *entity.ParsedTweet) (bool, error) {
 	bot.jobs <- Job{
 		inputMedias: inputMedias,
 		cache: &twiCache{
-			tweetId: tweet.TweetId,
-			medias:  tweet.Entities.Media,
+			username: tweet.ParsedUser.ScreenName,
+			tweetId:  tweet.TweetId,
+			medias:   tweet.Entities.Media,
 		},
 	}
 
