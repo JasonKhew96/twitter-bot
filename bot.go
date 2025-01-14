@@ -127,21 +127,14 @@ func New() (*bot, error) {
 	}
 
 	botClient := &gotgbot.BaseBotClient{
-		Client: http.Client{
-			Timeout: 60 * time.Second,
-		},
+		Client: http.Client{},
 		DefaultRequestOpts: &gotgbot.RequestOpts{
-			Timeout: 60 * time.Second,
-			APIURL:  config.BotApiUrl,
+			APIURL: config.BotApiUrl,
 		},
 	}
 
 	b, err := gotgbot.NewBot(config.TelegramBotToken, &gotgbot.BotOpts{
 		BotClient: botClient,
-		RequestOpts: &gotgbot.RequestOpts{
-			Timeout: 60 * time.Second,
-			APIURL:  config.BotApiUrl,
-		},
 	})
 	if err != nil {
 		return nil, err
@@ -200,10 +193,9 @@ func (bot *bot) initBot() error {
 	err := updater.StartPolling(bot.tg, &ext.PollingOpts{
 		EnableWebhookDeletion: true,
 		GetUpdatesOpts: &gotgbot.GetUpdatesOpts{
-			Timeout: 60,
+			Timeout: 59,
 			RequestOpts: &gotgbot.RequestOpts{
-				Timeout: 60 * time.Second,
-				APIURL:  bot.botApiUrl,
+				Timeout: time.Minute,
 			},
 		},
 	})
