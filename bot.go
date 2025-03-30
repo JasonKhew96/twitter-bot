@@ -492,6 +492,10 @@ func (bot *bot) handlePrivateMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 		case gotgbot.InputMediaVideo:
 			_, err = b.SendVideo(ctx.EffectiveChat.Id, inputMedia.GetMedia(), &gotgbot.SendVideoOpts{
 				Caption:   media.Caption,
+				Width:     media.Width,
+				Height:    media.Height,
+				Duration:  media.Duration,
+				Cover:     gotgbot.InputFileByURL(media.Cover),
 				ParseMode: "MarkdownV2",
 				ReplyParameters: &gotgbot.ReplyParameters{
 					MessageId: ctx.EffectiveMessage.MessageId,
@@ -500,6 +504,9 @@ func (bot *bot) handlePrivateMessages(b *gotgbot.Bot, ctx *ext.Context) error {
 		case gotgbot.InputMediaAnimation:
 			_, err = b.SendAnimation(ctx.EffectiveChat.Id, inputMedia.GetMedia(), &gotgbot.SendAnimationOpts{
 				Caption:   media.Caption,
+				Width:     media.Width,
+				Height:    media.Height,
+				Duration:  media.Duration,
 				ParseMode: "MarkdownV2",
 				ReplyParameters: &gotgbot.ReplyParameters{
 					MessageId: ctx.EffectiveMessage.MessageId,
