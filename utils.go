@@ -179,6 +179,7 @@ func tweet2InputMedias(tweet *entity.ParsedTweet, caption string) []gotgbot.Inpu
 				} else {
 					inputMedia = append(inputMedia, gotgbot.InputMediaVideo{
 						Media:     media,
+						Cover:     v.ThumbUrl,
 						Caption:   c,
 						Width:     width,
 						Height:    height,
