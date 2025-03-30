@@ -164,16 +164,25 @@ func tweet2InputMedias(tweet *entity.ParsedTweet, caption string) []gotgbot.Inpu
 				} else {
 					media = buf
 				}
+				width := int64(v.Width)
+				height := int64(v.Height)
+				duration := int64(v.DurationMs / 1000)
 				if len(tweet.Entities.Media) == 1 && v.IsAnimatedGif {
 					inputMedia = append(inputMedia, gotgbot.InputMediaAnimation{
 						Media:     media,
 						Caption:   c,
+						Width:     width,
+						Height:    height,
+						Duration:  duration,
 						ParseMode: "MarkdownV2",
 					})
 				} else {
 					inputMedia = append(inputMedia, gotgbot.InputMediaVideo{
 						Media:     media,
 						Caption:   c,
+						Width:     width,
+						Height:    height,
+						Duration:  duration,
 						ParseMode: "MarkdownV2",
 					})
 				}
