@@ -6,7 +6,7 @@ toolchain go1.24.1
 
 require (
 	github.com/JasonKhew96/twiscraper v0.0.0-20240829143620-b7323c646994
-	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.31
+	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.31.0.20250215125320-4ebbeba57803
 	github.com/corona10/goimagehash v1.1.0
 	github.com/friendsofgo/errors v0.9.2
 	github.com/kat-co/vala v0.0.0-20170210184112-42e1d8b61f12
